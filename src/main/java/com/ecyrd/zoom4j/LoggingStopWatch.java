@@ -18,7 +18,7 @@ public class LoggingStopWatch extends StopWatch
         
         // Do the logging here
         
-        if( m_log != null )
+        if( m_log != null && m_log.isEnabled() )
             m_log.log(this);
     }
 

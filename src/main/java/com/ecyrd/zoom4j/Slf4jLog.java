@@ -6,9 +6,6 @@ import org.slf4j.LoggerFactory;
 /**
  *  A simple logger which does nothing except write the stopwatch data to
  *  the given SLF4J logger using {@link Logger#info(String)}
- *  
- *  @author jalkanen
- *
  */
 public class Slf4jLog extends Log
 {
