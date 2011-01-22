@@ -1,7 +1,9 @@
-package com.ecyrd.zoom4j;
+package com.ecyrd.zoom4j.log;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.ecyrd.zoom4j.StopWatch;
 
 /**
  *  A simple logger which does nothing except write the stopwatch data to

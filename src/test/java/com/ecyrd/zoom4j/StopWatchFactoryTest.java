@@ -2,6 +2,9 @@ package com.ecyrd.zoom4j;
 
 import org.junit.Test;
 
+import com.ecyrd.zoom4j.log.PeriodicalLog;
+import com.ecyrd.zoom4j.log.Slf4jLog;
+
 
 public class StopWatchFactoryTest
 {
@@ -90,10 +93,11 @@ public class StopWatchFactoryTest
         PeriodicalLog log = new PeriodicalLog();
         log.setSlf4Logname("foo");
         log.setPeriod("5");
+        log.setJmx("iteration:1,iteration:2,iteration:3,iteration:4");
         
         StopWatchFactory swf = StopWatchFactory.getInstance(log);
         
-        int iterations = 1000;
+        int iterations = 100000;
         
         for( int i = 0; i < iterations; i++ )
         {

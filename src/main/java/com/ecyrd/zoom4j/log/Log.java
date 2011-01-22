@@ -1,4 +1,6 @@
-package com.ecyrd.zoom4j;
+package com.ecyrd.zoom4j.log;
+
+import com.ecyrd.zoom4j.StopWatch;
 
 /**
  *  Base class for the Logs.

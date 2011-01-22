@@ -7,14 +7,18 @@ import java.io.Serializable;
  *  <p>
  *  A "tag" is an unique grouping identifier. A "message" can be anything you like; it just
  *  travels with the StopWatch and is output with the toString method.
+ *  <p>
+ *  Tags must not contain whitespace, forward slash or commas. All other characters are allowed.
  */
 public class StopWatch implements Serializable
 {
+    private static final String DEFAULT_TAG = "[default]";
+
     private static final long serialVersionUID = 5154481161113185022L;
 
     private long   m_startNanos;
     private long   m_stopNanos;
-    private String m_tag = "?";
+    private String m_tag;
     private String m_message;
         
     private static final long NANOS_IN_SECOND = 1000*1000*1000;
@@ -99,7 +103,7 @@ public class StopWatch implements Serializable
      */
     public String toString()
     {
-        return m_tag+": "+getReadableTime() + (m_message != null ? m_message : "");
+        return (m_tag != null ? m_tag : DEFAULT_TAG)+": "+getReadableTime() + (m_message != null ? m_message : "");
     }
 
     /**
@@ -127,7 +131,7 @@ public class StopWatch implements Serializable
     {
         StringBuilder sb = new StringBuilder();
         
-        sb.append( m_tag );
+        sb.append( m_tag != null ? m_tag : DEFAULT_TAG);
         sb.append( ": " );
         sb.append( getReadableTime() );
         if( m_message != null ) sb.append(" "+m_message);
@@ -164,7 +168,7 @@ public class StopWatch implements Serializable
      *  @return
      */
     // TODO: Should probably return a FrozenStopWatch
-    protected StopWatch freeze()
+    public StopWatch freeze()
     {
         StopWatch sw = new StopWatch( m_tag, m_message );
         sw.m_startNanos = m_startNanos;

@@ -1,5 +1,7 @@
 package com.ecyrd.zoom4j;
 
+import com.ecyrd.zoom4j.log.Log;
+
 public class LoggingStopWatch extends StopWatch
 {
     private static final long serialVersionUID = 1L;

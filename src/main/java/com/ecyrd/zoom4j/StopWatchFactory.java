@@ -11,6 +11,8 @@ import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.ecyrd.zoom4j.log.Log;
+
 public class StopWatchFactory
 {
     private static final Logger log = LoggerFactory.getLogger(StopWatchFactory.class);
