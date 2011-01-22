@@ -4,6 +4,11 @@ designed using Perf4j as a model, but hopefully avoiding the pitfalls inherent
 in Perf4j's design.  Also, Perf4j does not seem to be seeing a lot of development
 these days...
 
+Zoom4J has a dependency on SLF4J (see http://slf4j.org), which it uses to log
+its workings, but no other dependencies.
+
+This is alpha quality code, caveat emptor.
+
 Anyhoo, while you're waiting for better javadocs, here's the gist of the usage.
 
 SIMPLEST POSSIBLE
