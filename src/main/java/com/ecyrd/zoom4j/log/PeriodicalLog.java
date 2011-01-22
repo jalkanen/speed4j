@@ -19,6 +19,7 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     private static final String ATTR_POSTFIX_MIN = "/min";
     private static final String ATTR_POSTFIX_STDDEV = "/stddev";
     private static final String ATTR_POSTFIX_AVG = "/avg (ms)";
+    private static final String ATTR_POSTFIX_COUNT = "/count";
     private Queue<StopWatch> m_queue = new ConcurrentLinkedQueue<StopWatch>();
     private Thread m_collectorThread;
     private boolean m_running = true;
@@ -216,6 +217,8 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
                 return cs.getMin();
             if( postfix.equals(ATTR_POSTFIX_STDDEV) )
                 return cs.getStdDev();
+            if( postfix.equals(ATTR_POSTFIX_COUNT) )
+                return cs.getInvocations();
             
             throw new AttributeNotFoundException(attribute);
         }
@@ -275,16 +278,17 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
 
         if( m_jmxAttributes != null )
         {
-            attributes = new MBeanAttributeInfo[m_jmxAttributes.length*4];
+            attributes = new MBeanAttributeInfo[m_jmxAttributes.length*5];
 
             for( int i = 0; i < m_jmxAttributes.length; i++ )
             {
                 String name = m_jmxAttributes[i].trim();
 
-                attributes[4*i] = new MBeanAttributeInfo( m_jmxAttributes[i]+ATTR_POSTFIX_AVG, "double", "Average value (in milliseconds)", true, false, false );
-                attributes[4*i+1] = new MBeanAttributeInfo( m_jmxAttributes[i]+ATTR_POSTFIX_STDDEV, "double", "Standard Deviation", true, false, false );
-                attributes[4*i+2] = new MBeanAttributeInfo( m_jmxAttributes[i]+ATTR_POSTFIX_MIN, "double", "Minimum value", true, false, false );
-                attributes[4*i+3] = new MBeanAttributeInfo( m_jmxAttributes[i]+ATTR_POSTFIX_MAX, "double", "Maximum value", true, false, false );
+                attributes[5*i] = new MBeanAttributeInfo( m_jmxAttributes[i]+ATTR_POSTFIX_AVG, "double", "Average value (in milliseconds)", true, false, false );
+                attributes[5*i+1] = new MBeanAttributeInfo( m_jmxAttributes[i]+ATTR_POSTFIX_STDDEV, "double", "Standard Deviation", true, false, false );
+                attributes[5*i+2] = new MBeanAttributeInfo( m_jmxAttributes[i]+ATTR_POSTFIX_MIN, "double", "Minimum value", true, false, false );
+                attributes[5*i+3] = new MBeanAttributeInfo( m_jmxAttributes[i]+ATTR_POSTFIX_MAX, "double", "Maximum value", true, false, false );
+                attributes[5*i+4] = new MBeanAttributeInfo( m_jmxAttributes[i]+ATTR_POSTFIX_COUNT, "int", "Number of invocations", true, false, false );
             }
         }
         //

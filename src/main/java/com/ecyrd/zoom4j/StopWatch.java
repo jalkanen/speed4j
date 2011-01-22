@@ -22,8 +22,18 @@ public class StopWatch implements Serializable
     private String m_message;
         
     private static final long NANOS_IN_SECOND = 1000*1000*1000;
+
+    public StopWatch()
+    {
+        this( null, null );
+    }
+
+    public StopWatch( String tag )
+    {
+        this( tag, null );
+    }
     
-    protected StopWatch( String tag, String message )
+    public StopWatch( String tag, String message )
     {
         m_tag = tag;
         m_message = message;
