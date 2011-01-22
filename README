@@ -121,3 +121,28 @@ something that looks like this:
 73337 [Thread-2] INFO foo - iteration:1                                 11.09    11.04    12.11     0.16      45
 73337 [Thread-2] INFO foo - iteration:0                                 10.09    10.03    10.70     0.12      34
 
+
+PROGRAMMATIC CONFIGURATION
+==========================
+
+So property files ain't good for you?  You can also try the following:
+
+public void myTest()
+{
+	PeriodicalLog myLog = new PeriodicalLog();
+	myLog.setName("loggingFactory");
+	myLog.setPeriod("60");
+	myLog.setJmx("busything:success,busything:failure");
+	myLog.setSlf4jLogname("com.example.myperiodicallog");
+	
+	StopWatchFactory swf = StopWatchFactory.getInstance(myLog);
+	
+	StopWatch sw = swf.getStopWatch();
+	...
+}
+
+The properties are directly accessible also via the appropriate setters.  In fact,
+all the Zoom4J configuration module does is that it just simply calls the appropriate
+setter module - so if a property is called "zoom4j.myLog.period=50" it will call
+setPeriod("50") on myLog.  (In the future it will be smart enough to do the 
+String->int conversion, promise).
