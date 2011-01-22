@@ -9,6 +9,7 @@ import com.ecyrd.zoom4j.StopWatch;
 public abstract class Log
 {
     private boolean m_enable = true;
+    private String  m_name   = "UndefinedLog";
     
     public void setEnable(String value)
     {
@@ -20,7 +21,16 @@ public abstract class Log
     {
         return m_enable;
     }
-                             
+                   
+    public void setName(String name)
+    {
+        m_name = name;
+    }
+    
+    public String getName()
+    {
+        return m_name;
+    }
     
     public abstract void log(StopWatch sw);
 

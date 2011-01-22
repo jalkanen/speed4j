@@ -3,10 +3,8 @@ package com.ecyrd.zoom4j;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
+import java.util.Map.Entry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,6 +72,12 @@ public class StopWatchFactory
                 swf = new StopWatchFactory( instantiateLog(logger) );
             }
             
+            //
+            //  Call the respective setXXX() methods of the logger
+            //  based on the configuration.
+            //
+            //  TODO: Be smart and do e.g. String->boolean conversion, etc.
+            //
             if( components.length > 2 )
             {
                 String setting = components[2];
@@ -101,6 +105,11 @@ public class StopWatchFactory
         }
     }
 
+    /**
+     *  Create a {@link StopWatchFactory} using the given Log.
+     *  
+     *  @param logger The log to use.
+     */
     public StopWatchFactory( Log logger )
     {
         m_log = logger;
@@ -116,9 +125,12 @@ public class StopWatchFactory
         String className = c_config.getProperty(PROPERTY_PREFIX+"."+logger);
         try
         {
+            @SuppressWarnings("unchecked")
             Class<Log> swfClass = (Class<Log>) Class.forName( className );
 
             Log log = swfClass.newInstance();
+            
+            log.setName(logger);
             
             return log;
         }
@@ -139,24 +151,34 @@ public class StopWatchFactory
         }
     }
     
-    public static class ConfigurationException extends RuntimeException
-    {
-        public ConfigurationException(Throwable rootCause)
-        {
-            super(rootCause);
-        }
-    }
-    
+    /**
+     *  Return a StopWatch for a null tag and null message.
+     *  
+     *  @return A configured StopWatch.
+     */
     public StopWatch getStopWatch()
     {
         return getStopWatch(null,null);
     }
     
+    /**
+     *  Returns a StopWatch for the given tag and null message.
+     *  
+     *  @param tag Tag which identifies this StopWatch.
+     *  @return A new StopWatch instance.
+     */
     public StopWatch getStopWatch( String tag )
     {
         return getStopWatch( tag,null );
     }
     
+    /**
+     *  Returns a StopWatch for the given tag and given message.
+     *   
+     *  @param tag Tag which identifies this StopWatch.
+     *  @param message A free-form message.
+     *  @return A new StopWatch.
+     */
     public StopWatch getStopWatch( String tag, String message )
     {
         return new LoggingStopWatch( m_log, tag, message );
@@ -167,16 +189,31 @@ public class StopWatchFactory
         m_log.shutdown();
     }
     
+    /**
+     *  Returns the default StopWatchFactory, which contains no
+     *  Log configuration.
+     *  
+     *  @return The default StopWatchFactory.
+     */
     public static StopWatchFactory getDefault()
     {
         return new StopWatchFactory(null);
     }
     
+    /**
+     *  Shut down all StopWatchFactories.  This method is useful
+     *  to call to clean up any resources which might be usable.
+     */
     public static void shutdown()
     {
-        for( StopWatchFactory swf : c_factories.values() )
+        for( Iterator<Entry<String, StopWatchFactory>> i = c_factories.entrySet().iterator(); i.hasNext() ; )
         {
+            Map.Entry<String,StopWatchFactory> e = i.next();
+            
+            StopWatchFactory swf = e.getValue();
             swf.internalShutdown();
+            
+            i.remove();
         }
     }
 

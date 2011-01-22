@@ -1,0 +1,123 @@
+
+This is Zoom4J, a very simple (but fast) Java performance analysis library. It is
+designed using Perf4j as a model, but hopefully avoiding the pitfalls inherent
+in Perf4j's design.  Also, Perf4j does not seem to be seeing a lot of development
+these days...
+
+Anyhoo, while you're waiting for better javadocs, here's the gist of the usage.
+
+SIMPLEST POSSIBLE
+=================
+
+public void myBusyMethod()
+{
+	StopWatch sw = new StopWatch();
+	
+	// Do the busy thing
+	
+	sw.stop();
+	System.out.println(sw);
+}
+
+This would simply print out how fast the block was.  Very useful for quick performance
+testing.  Also, you could do
+
+GETTING ITERATIONS TOO
+======================
+
+public void myBusyMethod()
+{
+	StopWatch sw = new StopWatch();
+	
+	int iterations = 1000;
+	
+	for( int i = 0; i < iterations; i++ ) {
+		// Do the busy thing
+	}
+	
+	sw.stop();
+	
+	System.out.println(sw.toString(iterations));
+}
+
+This would print out how fast the block was, *and* how many times the iterated
+block would execute per second.
+
+However, Zoom4J is designed to be a part of your application.  So we could
+also do the following:
+
+A COMPLEX EXAMPLE
+=================
+
+public void myBusyMethod2()
+{
+	StopWatch sw = myStopWatchFactory.getStopWatch();
+	
+	try
+	{
+		// Do the busy thing
+
+		// Notice that sw.stop() automatically logs if the Factory is configured so		
+		sw.stop("busyThing:success");
+	}
+	finally
+	{
+		sw.stop("busything:failure");
+	}
+}
+
+Wait, where did the "myStopWatchFactory" come from?  Well, you initialized it somewhere
+in your app or class with
+
+StopWatchFactory myStopWatchFactory = StopWatchFactory.getInstance("loggingFactory");
+
+This is where it gets interesting.  Zoom4J will read the configuration for the factory
+named in the call (in this case, "loggingFactory") from a file called "zoom4j.properties"
+from your class path.  Let's see how a sample file would look like:
+
+ZOOM4J.PROPERTIES
+=================
+
+   zoom4j.loggingFactory=com.ecyrd.zoom4j.log.Slf4jLog
+   zoom4j.loggingFactory.slf4jLogname=com.example.mylog
+
+So, this defines a Log called "loggingFactory" which uses the "com.ecyrd.zoom4j.log.Slf4jLog"
+instance to do the logging.  This particular class would connect to the given SLF4J logger
+and log using the info() method to it.  So depending your setup, this would then go to the
+log4j or console or wherever.
+
+
+PERIODICAL LOGGING
+==================
+
+If you are tired of manually looking at your log to figure out how fast something is, then
+PeriodicalLog is your friend.
+
+zoom4j.loggingFactory=com.ecyrd.zoom4j.log.PeriodicalLog
+zoom4j.loggingFactory.period=60
+zoom4j.loggingFactory.jmx=busything:success,busything:failure
+zoom4j.loggingFactory.slf4jLogname=com.example.myperiodicalllog
+
+OK, lots of goodies happening here.  First you can set the period during which the stats
+are collected, in this case 60 seconds.
+
+Second, if the "jmx" attribute is set for a PeriodicalLog, it will expose a JMX management
+bean which will list the average, standard deviation, count, min and max values for the given
+tags.
+
+Finally, it will also output a collected string to the given SLF4J logger, resulting into
+something that looks like this:
+
+73335 [Thread-2] INFO foo - Statistics from Sun Jan 23 00:30:50 EET 2011 to Sun Jan 23 00:30:55 EET 2011
+73335 [Thread-2] INFO foo - Tag                                       Avg(ms)      Min      Max  Std Dev   Count
+73335 [Thread-2] INFO foo - iteration:9                                 19.10    19.04    19.90     0.15      29
+73335 [Thread-2] INFO foo - iteration:8                                 18.22    18.04    20.26     0.44      33
+73336 [Thread-2] INFO foo - iteration:7                                 17.06    17.04    17.08     0.01      38
+73336 [Thread-2] INFO foo - iteration:6                                 16.11    16.04    16.94     0.21      33
+73336 [Thread-2] INFO foo - iteration:5                                 15.08    15.04    15.47     0.08      30
+73336 [Thread-2] INFO foo - iteration:4                                 14.07    14.04    14.20     0.03      30
+73337 [Thread-2] INFO foo - iteration:3                                 13.76    13.03    31.18     3.14      43
+73337 [Thread-2] INFO foo - iteration:2                                 12.11    12.03    13.48     0.26      30
+73337 [Thread-2] INFO foo - iteration:1                                 11.09    11.04    12.11     0.16      45
+73337 [Thread-2] INFO foo - iteration:0                                 10.09    10.03    10.70     0.12      34
+

@@ -6,8 +6,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.management.*;
 
+import com.ecyrd.zoom4j.ConfigurationException;
 import com.ecyrd.zoom4j.StopWatch;
-import com.ecyrd.zoom4j.StopWatchFactory.ConfigurationException;
 
 /**
  *  A Periodical log which can also expose its attributes via JMX.
@@ -72,7 +72,13 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
         {
             buildMBeanInfo();
             
-            m_mbeanServer.registerMBean( this, new ObjectName("periodicalLog: name=foo, type=bar") );
+            //
+            //  Remove and reinstall from the MBean registry if it already exists.
+            //
+            if( m_mbeanServer.isRegistered(getJMXName()) )
+                m_mbeanServer.unregisterMBean(getJMXName());
+            
+            m_mbeanServer.registerMBean( this, getJMXName() );
         }
         catch (InstanceAlreadyExistsException e)
         {
@@ -93,13 +99,22 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
 
         try
         {
-            m_mbeanServer.unregisterMBean(new ObjectName("periodicalLog: name=foo, type=bar"));
+            //
+            //  Remove MBean
+            //
+            if( m_mbeanServer.isRegistered(getJMXName()) )
+                m_mbeanServer.unregisterMBean(getJMXName());
         }
         catch (Exception e)
         {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+    }
+
+    private ObjectName getJMXName() throws MalformedObjectNameException
+    {
+        return new ObjectName("Zoom4J: name="+getName());
     }
     
     /**
