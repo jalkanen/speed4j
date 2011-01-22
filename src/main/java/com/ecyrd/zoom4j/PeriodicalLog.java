@@ -3,26 +3,15 @@ package com.ecyrd.zoom4j;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import org.slf4j.Logger;
-
-public class PeriodicalLog extends Log
+public class PeriodicalLog extends Slf4jLog
 {
     private Queue<StopWatch> m_queue = new ConcurrentLinkedQueue<StopWatch>();
-    private Logger m_systemLog;
     private Thread m_collectorThread;
     private boolean m_running = true;
     private int m_periodSeconds = 30;
     
-    public PeriodicalLog(Logger systemLog)
+    public PeriodicalLog()
     {
-        m_systemLog = systemLog;
-        
-        m_collectorThread = new CollectorThread();
-        
-        m_collectorThread.start();
-        
-        m_systemLog.info("Logging!");
-        
         Runtime.getRuntime().addShutdownHook( new Thread() {
             @Override
             public void run()
@@ -34,9 +23,19 @@ public class PeriodicalLog extends Log
     
     public void log(StopWatch sw)
     {
+        //
+        //  Start the collector lazily.
+        //
+        if( m_collectorThread == null )
+        {
+            m_collectorThread = new CollectorThread();
+
+            m_collectorThread.start();        
+        }
+        
         m_queue.add( sw.freeze() );
     }
-
+    
     @Override
     public void shutdown()
     {
@@ -49,7 +48,7 @@ public class PeriodicalLog extends Log
      */
     private void doLog(long lastRun)
     {
-        if( !m_systemLog.isInfoEnabled() ) return;
+        if( m_log == null || !m_log.isInfoEnabled() ) return;
         
         StopWatch sw;
         
@@ -88,7 +87,7 @@ public class PeriodicalLog extends Log
 
         formatter.format(pattern, args);
         
-        m_systemLog.info(sb.toString());
+        m_log.info(sb.toString());
     }
     
     private static final double NANOS_IN_MILLIS = 1e6;
@@ -195,5 +194,10 @@ public class PeriodicalLog extends Log
             doLog(lastRun);
         }
         
+    }
+
+    public void setPeriod(String string)
+    {
+        m_periodSeconds = Integer.parseInt(string);
     }
 }

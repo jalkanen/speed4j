@@ -18,7 +18,8 @@ public class LoggingStopWatch extends StopWatch
         
         // Do the logging here
         
-        m_log.log(this);
+        if( m_log != null )
+            m_log.log(this);
     }
 
     
