@@ -93,6 +93,7 @@ public class StopWatchFactoryTest
         PeriodicalLog log = new PeriodicalLog();
         log.setSlf4Logname("foo");
         log.setPeriod("5");
+        log.setName("testLog");
         log.setJmx("iteration:1,iteration:2,iteration:3,iteration:4");
         
         StopWatchFactory swf = StopWatchFactory.getInstance(log);

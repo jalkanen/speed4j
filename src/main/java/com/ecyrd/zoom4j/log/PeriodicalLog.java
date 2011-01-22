@@ -41,7 +41,7 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
             }
         });
     }
-    
+
     public void log(StopWatch sw)
     {
         //
