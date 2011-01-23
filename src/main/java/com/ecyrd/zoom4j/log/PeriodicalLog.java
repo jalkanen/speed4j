@@ -24,14 +24,14 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     private static final String ATTR_POSTFIX_STDDEV = "/stddev";
     private static final String ATTR_POSTFIX_AVG = "/avg (ms)";
     private static final String ATTR_POSTFIX_COUNT = "/count";
-    private Queue<StopWatch> m_queue = new ConcurrentLinkedQueue<StopWatch>();
-    private Thread m_collectorThread;
-    private boolean m_running = true;
-    private int m_periodSeconds = 30;
-    private MBeanServer m_mbeanServer = null;
-    private String[] m_jmxAttributes = null;
-    private MBeanInfo m_beanInfo;
-    static final double NANOS_IN_MILLIS = 1e6;
+    
+    private Queue<StopWatch> m_queue              = new ConcurrentLinkedQueue<StopWatch>();
+    private Thread           m_collectorThread;
+    private boolean          m_running            = true;
+    private int              m_periodSeconds      = 30;
+    private MBeanServer      m_mbeanServer        = null;
+    private String[]         m_jmxAttributes      = null;
+    private MBeanInfo        m_beanInfo;
     private HashMap<String,CollectedStatistics> m_statistics;
     
     /**

@@ -11,9 +11,11 @@ class CollectedStatistics
     private double m_min = Double.MAX_VALUE;
     private double m_max = 0.0;
     
+    private double NANOS_IN_MILLIS = 1e6;
+    
     public void add(StopWatch sw)
     {
-        double timeInMs = sw.getTimeNanos() / PeriodicalLog.NANOS_IN_MILLIS;
+        double timeInMs = sw.getTimeNanos() / NANOS_IN_MILLIS;
         m_times.add(timeInMs);
         
         if( timeInMs < m_min ) m_min = timeInMs;
