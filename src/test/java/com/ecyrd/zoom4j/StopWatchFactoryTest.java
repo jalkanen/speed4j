@@ -15,6 +15,9 @@
 */
 package com.ecyrd.zoom4j;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import org.junit.Test;
 
 import com.ecyrd.zoom4j.log.PeriodicalLog;
@@ -24,6 +27,7 @@ import com.ecyrd.zoom4j.log.Slf4jLog;
 public class StopWatchFactoryTest
 {
     
+    /* This succeeds if it passes quietly. */
     @Test
     public void test() throws InterruptedException
     {
@@ -40,46 +44,6 @@ public class StopWatchFactoryTest
             sw.stop("iteration:success");
         }
        
-    }
-
-    @Test
-    public void testToStringIterations() throws InterruptedException
-    {
-        StopWatchFactory swf = StopWatchFactory.getDefault();
-        
-        int iterations = 100;
-
-        StopWatch sw = swf.getStopWatch("foo");
-                
-        for( int i = 0; i < iterations; i++ )
-        {
-            Thread.sleep(10+ (long)(Math.random() * 10));
-        }
-
-        sw.stop("ok");
-
-        System.out.println(sw);
-        System.out.println(sw.toString(iterations));
-    }
-
-    @Test
-    public void testSpeed() throws InterruptedException
-    {
-        StopWatchFactory swf = StopWatchFactory.getDefault();
-        
-        long time = System.currentTimeMillis();
-        int iterations = 1200000;
-        
-        for( int i = 0; i < iterations; i++ )
-        {
-            StopWatch sw = swf.getStopWatch("foo");
-                        
-            sw.stop("iteration:success");
-        }
-        
-        time = System.currentTimeMillis() - time;
-        
-        System.out.println("Iterations: "+iterations+", total time "+time+" ms, is "+(iterations*1000/time)+" iterations per second");
     }
     
     @Test
