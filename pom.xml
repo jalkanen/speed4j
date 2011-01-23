@@ -35,4 +35,31 @@
     </dependency>
 
   </dependencies>
+
+  <!--  Define build dependencies, like the source version. -->  
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>1.5</source>
+          <target>1.5</target>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  
+  <!--  This is for pushing for my own repo. -->
+  <distributionManagement>
+    <downloadUrl>http://www.ecyrd.com/mvn</downloadUrl>
+    <repository>
+      <uniqueVersion>false</uniqueVersion>
+      <id>ecyrd-maven-repo</id>
+      <name>Ecyrd.com testing repo</name>
+      <url>scp://www.ecyrd.com/p/web/www-data/www.ecyrd.com/htdocs/mvn/</url>
+      <layout>default</layout>
+    </repository>
+  </distributionManagement>
+
 </project>
