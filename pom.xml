@@ -14,7 +14,18 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
+  <!--  TODO:  Figure out how to correctly declare these. -->
   <dependencies>
+
+    <!--  This is the only hard dependency that we have. If you don't
+          like it, get me a patch for using java.util.logging instead. -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.6.1</version>
+    </dependency>
+
+    <!-- These are then the dependencies for running our unit tests. -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -24,14 +35,9 @@
     
     <dependency>
       <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <version>1.6.1</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.slf4j</groupId>
       <artifactId>slf4j-simple</artifactId>
       <version>1.6.1</version>
+      <scope>test</scope>
     </dependency>
 
   </dependencies>
