@@ -11,7 +11,11 @@ import com.ecyrd.zoom4j.StopWatch;
 
 /**
  *  A Periodical log which can also expose its attributes via JMX.
- *  
+ *  <p>
+ *  The JMX name is based on the name of the Log.  So if you don't set
+ *  it via {@link #setName(String)}, you'll end up something that Zoom4J
+ *  picks up on its own.  Normally, if you use the property file to
+ *  configure Zoom4J, this gets automatically assigned for you.
  */
 public class PeriodicalLog extends Slf4jLog implements DynamicMBean
 {
@@ -30,7 +34,9 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     static final double NANOS_IN_MILLIS = 1e6;
     private HashMap<String,CollectedStatistics> m_statistics;
     
-
+    /**
+     *  Creates an instance of PeriodicalLog.
+     */
     public PeriodicalLog()
     {
         Runtime.getRuntime().addShutdownHook( new Thread() {
@@ -42,6 +48,7 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
         });
     }
 
+    @Override
     public void log(StopWatch sw)
     {
         //
@@ -90,7 +97,10 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
         }
     }
     
-    
+    /**
+     *  Shuts down the collector thread and removes the JMX bean
+     *  if it is registered.
+     */
     @Override
     public void shutdown()
     {
@@ -112,6 +122,13 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
         }
     }
 
+    /**
+     *  The name under which this Log should be exposed as a JMX bean.
+     *  
+     *  @return A ready-to-use ObjectName.
+     *  
+     *  @throws MalformedObjectNameException If your name is faulty.
+     */
     private ObjectName getJMXName() throws MalformedObjectNameException
     {
         return new ObjectName("Zoom4J: name="+getName());
@@ -154,6 +171,12 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
         printf("");
     }
     
+    /**
+     *  Writes to the internal logger, just like ye goode olde C printf().
+     *  
+     *  @param pattern Pattern to write to (see {@link Formatter#format(String, Object...)}
+     *  @param args Arguments for the pattern.
+     */
     private void printf( String pattern, Object... args )
     {
         StringBuilder sb = new StringBuilder();
@@ -164,6 +187,10 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
         m_log.info(sb.toString());
     }
     
+    /**
+     *  An internal Thread which wakes up periodically and checks whether
+     *  the data should be collected and dumped.
+     */
     private class CollectorThread extends Thread
     {
         @Override
@@ -202,6 +229,13 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
         
     }
 
+    /**
+     *  Set the logging period in seconds.  For example, a value of 5
+     *  would log every 5 seconds, at 0,5,10,15,20,25,30,35,40,45,50, and 55 seconds
+     *  after the full minute.
+     *  
+     *  @param string
+     */
     public void setPeriod(String string)
     {
         m_periodSeconds = Integer.parseInt(string);
@@ -287,6 +321,11 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
         return null;
     }
     
+    /**
+     *  Builds the MBeanInfo for all the exposed attributes.
+     *  
+     *  @throws IntrospectionException
+     */
     private void buildMBeanInfo() throws IntrospectionException
     {
         MBeanAttributeInfo[] attributes = null;
@@ -299,11 +338,11 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
             {
                 String name = m_jmxAttributes[i].trim();
 
-                attributes[5*i] = new MBeanAttributeInfo( m_jmxAttributes[i]+ATTR_POSTFIX_AVG, "double", "Average value (in milliseconds)", true, false, false );
-                attributes[5*i+1] = new MBeanAttributeInfo( m_jmxAttributes[i]+ATTR_POSTFIX_STDDEV, "double", "Standard Deviation", true, false, false );
-                attributes[5*i+2] = new MBeanAttributeInfo( m_jmxAttributes[i]+ATTR_POSTFIX_MIN, "double", "Minimum value", true, false, false );
-                attributes[5*i+3] = new MBeanAttributeInfo( m_jmxAttributes[i]+ATTR_POSTFIX_MAX, "double", "Maximum value", true, false, false );
-                attributes[5*i+4] = new MBeanAttributeInfo( m_jmxAttributes[i]+ATTR_POSTFIX_COUNT, "int", "Number of invocations", true, false, false );
+                attributes[5*i]   = new MBeanAttributeInfo( name+ATTR_POSTFIX_AVG,    "double", "Average value (in milliseconds)", true, false, false );
+                attributes[5*i+1] = new MBeanAttributeInfo( name+ATTR_POSTFIX_STDDEV, "double", "Standard Deviation", true, false, false );
+                attributes[5*i+2] = new MBeanAttributeInfo( name+ATTR_POSTFIX_MIN,    "double", "Minimum value", true, false, false );
+                attributes[5*i+3] = new MBeanAttributeInfo( name+ATTR_POSTFIX_MAX,    "double", "Maximum value", true, false, false );
+                attributes[5*i+4] = new MBeanAttributeInfo( name+ATTR_POSTFIX_COUNT,  "int",    "Number of invocations", true, false, false );
             }
         }
         //
@@ -314,7 +353,7 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
         MBeanNotificationInfo[] notifications = null;
 
         m_beanInfo = new MBeanInfo( getClass().getName(),
-                                    "PeriodicalLog Description",
+                                    "PeriodicalLog for logger "+getName(),
                                     attributes,
                                     constructors,
                                     operations,
