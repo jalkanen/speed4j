@@ -1,20 +1,61 @@
+<!-- 
+    Maven is one of the big mysteries of humankind.  In fact, it's amazing that anyone
+    ever gets anything done with it.  To make your task easier, I'm documenting some
+    really useful goals for you here to use.
+    
+    mvn eclipse:eclipse - Create an Eclipse project out, ready for importing.
+    
+    mvn clean install - Cleans and compiles and installs it into your local repository (e.g. ~/.m2/...)
+                        The $project/target -subdirectory will contain the built artifacts.
+   
+    mvn deploy - Deploys the project to the configured site (see the distributionManagement section below).
+    
+    Don't forget that you can always use "-o" switch for offline use.
+ -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.ecyrd.zoom4j</groupId>
   <artifactId>zoom4j</artifactId>
-  <version>0.1-SNAPSHOT</version>
+  <version>0.1</version>
   <packaging>jar</packaging>
-
+  <description>Zoom4j is a basic performance analysis library for Java which allows you to insert
+               stopwatches into your codebase and turn them on or off as you need.</description>
   <name>zoom4j</name>
-  <url>http://maven.apache.org</url>
+  <url>https://github.com/jalkanen/zoom4j</url>
 
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  
+  <scm>
+    <url>http://github.com/jalkanen/zoom4j</url>
+    <connection>git://github.com/jalkanen/zoom4j.git</connection>
+  </scm>
+  
+  <developers>
+    <developer>
+      <id>jalkanen</id>
+      <name>Janne Jalkanen</name>
+      <email>jalkanen@ecyrd.com</email>
+      <url>http://www.ecyrd.com/</url>
+    </developer>
+  </developers>
+  
+  <issueManagement>
+    <system>Github</system>
+    <url>https://github.com/jalkanen/zoom4j/issues</url>
+  </issueManagement>
+  
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
-  <!--  TODO:  Figure out how to correctly declare these. -->
   <dependencies>
 
     <!--  This is the only hard dependency that we have. If you don't
@@ -48,12 +89,23 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
+        <version>2.3.2</version>
         <configuration>
           <source>1.5</source>
           <target>1.5</target>
         </configuration>
       </plugin>
     </plugins>
+    
+     <extensions>
+      <!-- Enabling the use of FTP -->
+      <extension>
+        <groupId>org.apache.maven.wagon</groupId>
+         <artifactId>wagon-ssh-external</artifactId>
+         <version>1.0-beta-6</version>
+      </extension>
+    </extensions>
+    
   </build>
   
   <!--  This is for pushing for my own repo. -->
@@ -63,7 +115,7 @@
       <uniqueVersion>false</uniqueVersion>
       <id>ecyrd-maven-repo</id>
       <name>Ecyrd.com testing repo</name>
-      <url>scp://www.ecyrd.com/p/web/www-data/www.ecyrd.com/htdocs/mvn/</url>
+      <url>scpexe://www.ecyrd.com/p/web/www-data/www.ecyrd.com/htdocs/mvn/</url>
       <layout>default</layout>
     </repository>
   </distributionManagement>
