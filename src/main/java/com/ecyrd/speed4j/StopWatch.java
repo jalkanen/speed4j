@@ -24,6 +24,8 @@ import java.io.Serializable;
  *  travels with the StopWatch and is output with the toString method.
  *  <p>
  *  Tags must not contain whitespace, forward slash or commas. All other characters are allowed.
+ *  <p>
+ *  Most of the StopWatch methods return a reference to itself for easy chaining.
  */
 public class StopWatch implements Serializable
 {
@@ -55,6 +57,12 @@ public class StopWatch implements Serializable
         start();
     }
     
+    /**
+     *  Starts a StopWatch which has been previously stopped.  If the StopWatch was already running,
+     *  this method will reset it.
+     *  
+     *  @return This StopWatch.
+     */
     public StopWatch start()
     {
         m_startNanos = System.nanoTime();
@@ -62,11 +70,21 @@ public class StopWatch implements Serializable
         return this;
     }
     
+    /**
+     *  The internal stop() method, which can be overridden by subclasses to provide additional
+     *  functionality at stop().  Don't forget to call super.stop() in your subclass, or else
+     *  the clock will not be stopped.
+     */
     protected void internalStop()
     {
         m_stopNanos = System.nanoTime();
     }
     
+    /**
+     *  Stops the StopWatch.
+     *  
+     *  @return This StopWatch instance.
+     */
     public StopWatch stop()
     {
         internalStop();
@@ -74,6 +92,12 @@ public class StopWatch implements Serializable
         return this;
     }
     
+    /**
+     *  Stops the StopWatch and assigns the given tag to it.
+     *  
+     *  @param tag The tag to assign.
+     *  @return This StopWatch.
+     */
     public StopWatch stop( String tag )
     {
         m_tag = tag;
