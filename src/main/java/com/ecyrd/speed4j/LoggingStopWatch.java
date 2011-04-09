@@ -13,9 +13,9 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
-package com.ecyrd.zoom4j;
+package com.ecyrd.speed4j;
 
-import com.ecyrd.zoom4j.log.Log;
+import com.ecyrd.speed4j.log.Log;
 
 public class LoggingStopWatch extends StopWatch
 {

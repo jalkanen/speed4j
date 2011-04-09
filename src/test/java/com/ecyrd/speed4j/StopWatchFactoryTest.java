@@ -13,12 +13,14 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
-package com.ecyrd.zoom4j;
+package com.ecyrd.speed4j;
 
 import org.junit.Test;
 
-import com.ecyrd.zoom4j.log.PeriodicalLog;
-import com.ecyrd.zoom4j.log.Slf4jLog;
+import com.ecyrd.speed4j.StopWatch;
+import com.ecyrd.speed4j.StopWatchFactory;
+import com.ecyrd.speed4j.log.PeriodicalLog;
+import com.ecyrd.speed4j.log.Slf4jLog;
 
 
 public class StopWatchFactoryTest

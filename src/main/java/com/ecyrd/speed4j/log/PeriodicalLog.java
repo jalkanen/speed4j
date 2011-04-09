@@ -13,7 +13,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
-package com.ecyrd.zoom4j.log;
+package com.ecyrd.speed4j.log;
 
 import java.lang.management.ManagementFactory;
 import java.util.*;
@@ -21,16 +21,16 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.management.*;
 
-import com.ecyrd.zoom4j.ConfigurationException;
-import com.ecyrd.zoom4j.StopWatch;
+import com.ecyrd.speed4j.ConfigurationException;
+import com.ecyrd.speed4j.StopWatch;
 
 /**
  *  A Periodical log which can also expose its attributes via JMX.
  *  <p>
  *  The JMX name is based on the name of the Log.  So if you don't set
- *  it via {@link #setName(String)}, you'll end up something that Zoom4J
+ *  it via {@link #setName(String)}, you'll end up something that Speed4J
  *  picks up on its own.  Normally, if you use the property file to
- *  configure Zoom4J, this gets automatically assigned for you.
+ *  configure Speed4J, this gets automatically assigned for you.
  */
 public class PeriodicalLog extends Slf4jLog implements DynamicMBean
 {
@@ -146,7 +146,7 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
      */
     private ObjectName getJMXName() throws MalformedObjectNameException
     {
-        return new ObjectName("Zoom4J: name="+getName());
+        return new ObjectName("Speed4J: name="+getName());
     }
     
     /**

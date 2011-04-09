@@ -13,7 +13,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
-package com.ecyrd.zoom4j;
+package com.ecyrd.speed4j;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,14 +24,14 @@ import java.util.Map.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ecyrd.zoom4j.log.Log;
+import com.ecyrd.speed4j.log.Log;
 
 public class StopWatchFactory
 {
     private static final Logger log = LoggerFactory.getLogger(StopWatchFactory.class);
-    private static final String PROPERTY_PREFIX = "zoom4j";
+    private static final String PROPERTY_PREFIX = "speed4j";
     private static Properties c_config = new Properties();
-    private static final String PROPERTYFILENAME = "zoom4j.properties";
+    private static final String PROPERTYFILENAME = "speed4j.properties";
 
     private static Map<String,StopWatchFactory> c_factories = new HashMap<String,StopWatchFactory>();
 
@@ -59,7 +59,7 @@ public class StopWatchFactory
             in = StopWatchFactory.class.getResourceAsStream("/"+PROPERTYFILENAME);
         
         if( in == null )
-            in = StopWatchFactory.class.getResourceAsStream("/com/ecyrd/zoom4j/default_zoom4j.properties");
+            in = StopWatchFactory.class.getResourceAsStream("/com/ecyrd/speed4j/default_speed4j.properties");
 
         try
         {

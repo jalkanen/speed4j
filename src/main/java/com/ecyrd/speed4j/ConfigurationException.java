@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-package com.ecyrd.zoom4j;
+package com.ecyrd.speed4j;
 
 public class ConfigurationException extends RuntimeException
 {

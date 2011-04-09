@@ -16,14 +16,14 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.ecyrd.zoom4j</groupId>
-  <artifactId>zoom4j</artifactId>
+  <groupId>com.ecyrd.speed4j</groupId>
+  <artifactId>speed4j</artifactId>
   <version>0.2-SNAPSHOT</version>
   <packaging>jar</packaging>
-  <description>Zoom4j is a basic performance analysis library for Java which allows you to insert
+  <description>Speed4j is a basic performance analysis library for Java which allows you to insert
                stopwatches into your codebase and turn them on or off as you need.</description>
-  <name>zoom4j</name>
-  <url>https://github.com/jalkanen/zoom4j</url>
+  <name>speed4j</name>
+  <url>https://github.com/jalkanen/speed4j</url>
 
   <licenses>
     <license>
@@ -34,8 +34,8 @@
   </licenses>
   
   <scm>
-    <url>http://github.com/jalkanen/zoom4j</url>
-    <connection>git://github.com/jalkanen/zoom4j.git</connection>
+    <url>http://github.com/jalkanen/speed4j</url>
+    <connection>git://github.com/jalkanen/speed4j.git</connection>
   </scm>
   
   <developers>
@@ -49,7 +49,7 @@
   
   <issueManagement>
     <system>Github</system>
-    <url>https://github.com/jalkanen/zoom4j/issues</url>
+    <url>https://github.com/jalkanen/speed4j/issues</url>
   </issueManagement>
   
   <properties>
