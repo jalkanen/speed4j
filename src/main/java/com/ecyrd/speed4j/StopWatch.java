@@ -106,6 +106,13 @@ public class StopWatch implements Serializable
         return this;
     }
     
+    /**
+     *  Stops the StopWatch, assigns the tag and a free-form message.
+     *  
+     *  @param tag The tag to assign.
+     *  @param message A free-form message that associates with this particular StopWatch.
+     *  @return This StopWatch.
+     */
     public StopWatch stop( String tag, String message )
     {
         m_tag = tag;
@@ -115,6 +122,11 @@ public class StopWatch implements Serializable
         return this;
     }
     
+    /**
+     *  Stops and starts the StopWatch, essentially resetting it.
+     *  
+     *  @return This StopWatch.
+     */
     public StopWatch lap()
     {
         stop();
@@ -123,11 +135,21 @@ public class StopWatch implements Serializable
         return this;
     }
     
+    /**
+     *  Returns the message associated with this StopWatch.
+     *  
+     *  @return The message, or null, if no message has been associated.
+     */
     public String getMessage()
     {
         return m_message;
     }
     
+    /**
+     *  Returns the tag (grouping) for this StopWatch.
+     *  
+     *  @return The tag, or null, if no tag has yet been assigned.
+     */
     public String getTag()
     {
         return m_tag;
