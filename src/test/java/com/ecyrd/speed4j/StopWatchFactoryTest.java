@@ -49,7 +49,7 @@ public class StopWatchFactoryTest
     public void testSlf4jLog() throws InterruptedException
     {
         Slf4jLog log = new Slf4jLog();
-        log.setSlf4Logname("foo");
+        log.setSlf4jLogname("foo");
         StopWatchFactory swf = StopWatchFactory.getInstance(log);
         
         int iterations = 100;
@@ -69,8 +69,8 @@ public class StopWatchFactoryTest
     public void testPeriodicalLog() throws InterruptedException
     {
         PeriodicalLog log = new PeriodicalLog();
-        log.setSlf4Logname("foo");
-        log.setPeriod("5");
+        log.setSlf4jLogname("foo");
+        log.setPeriod(5);
         log.setName("testLog");
         log.setJmx("iteration:1,iteration:2,iteration:3,iteration:4");
         

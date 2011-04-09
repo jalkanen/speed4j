@@ -30,6 +30,11 @@ public class ConfigurationException extends RuntimeException
     
     public ConfigurationException(Throwable rootCause)
     {
-        super(rootCause);
+        super( rootCause );
+    }
+
+    public ConfigurationException( String message )
+    {
+        super( message );
     }
 }

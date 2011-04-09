@@ -17,7 +17,6 @@ package com.ecyrd.speed4j;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Method;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -25,7 +24,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.ecyrd.speed4j.log.Log;
+import com.ecyrd.speed4j.util.SetterUtil;
 
+/**
+ *  Provides a friendly way to get yer StopWatches.
+ *  <p>
+ *  This class is not a singleton, which may surprise you.
+ */
 public class StopWatchFactory
 {
     private static final Logger log = LoggerFactory.getLogger(StopWatchFactory.class);
@@ -35,6 +40,9 @@ public class StopWatchFactory
 
     private static Map<String,StopWatchFactory> c_factories = new HashMap<String,StopWatchFactory>();
 
+    /**
+     *  This is the Log that this factory is associated to.
+     */
     private Log m_log;
     
     /**
@@ -51,6 +59,7 @@ public class StopWatchFactory
      *  
      *  @throws ConfigurationException If configuration fails.
      */
+    @SuppressWarnings( "unchecked" )
     private static void configure() throws ConfigurationException
     {
         InputStream in = StopWatchFactory.class.getResourceAsStream(PROPERTYFILENAME);
@@ -91,8 +100,6 @@ public class StopWatchFactory
             //  Call the respective setXXX() methods of the logger
             //  based on the configuration.
             //
-            //  TODO: Be smart and do e.g. String->boolean conversion, etc.
-            //
             if( components.length > 2 )
             {
                 String setting = components[2];
@@ -101,9 +108,7 @@ public class StopWatchFactory
                 
                 try
                 {
-                    Method m = swf.getLog().getClass().getMethod(method,String.class);
-                    
-                    m.invoke(swf.getLog(), c_config.get(key));
+                    SetterUtil.set( swf.getLog(), method, (String)c_config.get(key) );
                 }
                 catch( NoSuchMethodException e1 )
                 {
@@ -119,11 +124,11 @@ public class StopWatchFactory
             c_factories.put(logger, swf);
         }
     }
-
+    
     /**
      *  Create a {@link StopWatchFactory} using the given Log.
      *  
-     *  @param logger The log to use.
+     *  @param logger The {@link Log} to use.
      */
     public StopWatchFactory( Log logger )
     {
@@ -143,11 +148,11 @@ public class StopWatchFactory
             @SuppressWarnings("unchecked")
             Class<Log> swfClass = (Class<Log>) Class.forName( className );
 
-            Log log = swfClass.newInstance();
+            Log lg = swfClass.newInstance();
             
-            log.setName(logger);
+            lg.setName(logger);
             
-            return log;
+            return lg;
         }
         catch (ClassNotFoundException e1)
         {
@@ -167,7 +172,7 @@ public class StopWatchFactory
     }
     
     /**
-     *  Return a StopWatch for a null tag and null message.
+     *  Return a StopWatch for an empty tag and empty message.
      *  
      *  @return A configured StopWatch.
      */
@@ -252,9 +257,13 @@ public class StopWatchFactory
      *  @param loggerName name to search for.
      *  @return A factory, or null, if not found.
      */
-    public static StopWatchFactory getInstance(String loggerName)
+    public static StopWatchFactory getInstance(String loggerName) throws ConfigurationException
     {
-        return c_factories.get(loggerName);
+        StopWatchFactory swf = c_factories.get(loggerName);
+        
+        if( swf == null ) throw new ConfigurationException("No logger by the name "+loggerName+" found.");
+        
+        return swf;
     }
 
 }

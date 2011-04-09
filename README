@@ -149,5 +149,5 @@ public void myTest()
 The properties are directly accessible also via the appropriate setters.  In fact,
 all the speed4j configuration module does is that it just simply calls the appropriate
 setter module - so if a property is called "speed4j.myLog.period=50" it will call
-setPeriod("50") on myLog.  (In the future it will be smart enough to do the 
-String->int conversion, promise).
+setPeriod(50) on myLog.
+ 

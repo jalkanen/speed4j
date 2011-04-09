@@ -249,11 +249,11 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
      *  would log every 5 seconds, at 0,5,10,15,20,25,30,35,40,45,50, and 55 seconds
      *  after the full minute.
      *  
-     *  @param string
+     *  @param periodSeconds The period in seconds.
      */
-    public void setPeriod(String string)
+    public void setPeriod(int periodSeconds)
     {
-        m_periodSeconds = Integer.parseInt(string);
+        m_periodSeconds = periodSeconds;
     }
 
     //
