@@ -18,35 +18,67 @@ package com.ecyrd.speed4j.log;
 import com.ecyrd.speed4j.StopWatch;
 
 /**
- *  Base class for the Logs.
- *  
+ *  Base class for the Logs.  A Log is an abstract entity that encapsulates
+ *  the knowledge how to manage the information contained by StopWatches upon 
+ *  their stop() method.
  */
 public abstract class Log
 {
+    private static final String DEFAULT_NAME = "UndefinedLog";
     private boolean m_enable = true;
-    private String  m_name   = "UndefinedLog";
+    private String  m_name   = DEFAULT_NAME;
     
+    /**
+     *  Enable or disable this Log.  If the log is disabled, no logging
+     *  is done until it is enabled again.  By default, the Log is enabled
+     *  when it's created (though obviously, some subclasses might make
+     *  start disabled).
+     *  
+     *  @param value True, if enabled.  False otherwise.
+     */
     public void setEnable(String value)
     {
         if( value.equals("false") ) m_enable = false;
         else m_enable = true;
     }
     
+    /**
+     *  Returns true, if this Log is enabled.
+     *  
+     *  @return True or false.
+     */
     public boolean isEnabled()
     {
         return m_enable;
     }
                    
+    /**
+     *  Sets the name of the Log.  If not set, uses {@value DEFAULT_NAME}.
+     *  
+     *  @param name Name of the Log.
+     */
     public void setName(String name)
     {
         m_name = name;
     }
     
+    /**
+     *  Returns the name of the Log.
+     *  
+     *  @return The name of the Log.
+     */
     public String getName()
     {
         return m_name;
     }
     
+    /**
+     *  Logs the given StopWatch.  Called when stop() is called.  In general,
+     *  you will want to keep this method fairly speedy, since StopWatches
+     *  are often used inside tight loops.
+     *  
+     *  @param sw The StopWatch to log.
+     */
     public abstract void log(StopWatch sw);
 
     /**

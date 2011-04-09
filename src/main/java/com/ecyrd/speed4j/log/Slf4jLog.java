@@ -31,7 +31,7 @@ public class Slf4jLog extends Log
     /**
      *  Set the name of the logger that this logger should log to.
      */
-    public void setSlf4Logname(String logName)
+    public void setSlf4jLogname(String logName)
     {
         m_log = LoggerFactory.getLogger(logName);
     }

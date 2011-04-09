@@ -26,6 +26,11 @@ import org.slf4j.LoggerFactory;
 
 import com.ecyrd.speed4j.log.Log;
 
+/**
+ *  Provides a friendly way to get yer StopWatches.
+ *  <p>
+ *  This class is not a singleton, which may surprise you.
+ */
 public class StopWatchFactory
 {
     private static final Logger log = LoggerFactory.getLogger(StopWatchFactory.class);
@@ -35,6 +40,9 @@ public class StopWatchFactory
 
     private static Map<String,StopWatchFactory> c_factories = new HashMap<String,StopWatchFactory>();
 
+    /**
+     *  This is the Log that this factory is associated to.
+     */
     private Log m_log;
     
     /**
@@ -51,6 +59,7 @@ public class StopWatchFactory
      *  
      *  @throws ConfigurationException If configuration fails.
      */
+    @SuppressWarnings( "unchecked" )
     private static void configure() throws ConfigurationException
     {
         InputStream in = StopWatchFactory.class.getResourceAsStream(PROPERTYFILENAME);
@@ -123,7 +132,7 @@ public class StopWatchFactory
     /**
      *  Create a {@link StopWatchFactory} using the given Log.
      *  
-     *  @param logger The log to use.
+     *  @param logger The {@link Log} to use.
      */
     public StopWatchFactory( Log logger )
     {
@@ -143,11 +152,11 @@ public class StopWatchFactory
             @SuppressWarnings("unchecked")
             Class<Log> swfClass = (Class<Log>) Class.forName( className );
 
-            Log log = swfClass.newInstance();
+            Log lg = swfClass.newInstance();
             
-            log.setName(logger);
+            lg.setName(logger);
             
-            return log;
+            return lg;
         }
         catch (ClassNotFoundException e1)
         {
@@ -167,7 +176,7 @@ public class StopWatchFactory
     }
     
     /**
-     *  Return a StopWatch for a null tag and null message.
+     *  Return a StopWatch for an empty tag and empty message.
      *  
      *  @return A configured StopWatch.
      */
@@ -252,9 +261,13 @@ public class StopWatchFactory
      *  @param loggerName name to search for.
      *  @return A factory, or null, if not found.
      */
-    public static StopWatchFactory getInstance(String loggerName)
+    public static StopWatchFactory getInstance(String loggerName) throws ConfigurationException
     {
-        return c_factories.get(loggerName);
+        StopWatchFactory swf = c_factories.get(loggerName);
+        
+        if( swf == null ) throw new ConfigurationException("No logger by the name "+loggerName+" found.");
+        
+        return swf;
     }
 
 }
