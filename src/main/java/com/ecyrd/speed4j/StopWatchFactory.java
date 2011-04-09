@@ -17,7 +17,6 @@ package com.ecyrd.speed4j;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Method;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -25,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.ecyrd.speed4j.log.Log;
+import com.ecyrd.speed4j.util.SetterUtil;
 
 /**
  *  Provides a friendly way to get yer StopWatches.
@@ -100,8 +100,6 @@ public class StopWatchFactory
             //  Call the respective setXXX() methods of the logger
             //  based on the configuration.
             //
-            //  TODO: Be smart and do e.g. String->boolean conversion, etc.
-            //
             if( components.length > 2 )
             {
                 String setting = components[2];
@@ -110,9 +108,7 @@ public class StopWatchFactory
                 
                 try
                 {
-                    Method m = swf.getLog().getClass().getMethod(method,String.class);
-                    
-                    m.invoke(swf.getLog(), c_config.get(key));
+                    SetterUtil.set( swf.getLog(), method, (String)c_config.get(key) );
                 }
                 catch( NoSuchMethodException e1 )
                 {
@@ -128,7 +124,7 @@ public class StopWatchFactory
             c_factories.put(logger, swf);
         }
     }
-
+    
     /**
      *  Create a {@link StopWatchFactory} using the given Log.
      *  
