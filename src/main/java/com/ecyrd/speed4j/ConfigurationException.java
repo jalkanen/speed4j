@@ -16,8 +16,18 @@
 
 package com.ecyrd.speed4j;
 
+/**
+ *  Thrown whenever there's a problem with Speed4J configuration.
+ */
 public class ConfigurationException extends RuntimeException
 {
+    private static final long serialVersionUID = 1L;
+
+    public ConfigurationException(String message, Throwable rootCause)
+    {
+        super( message, rootCause );
+    }
+    
     public ConfigurationException(Throwable rootCause)
     {
         super(rootCause);
