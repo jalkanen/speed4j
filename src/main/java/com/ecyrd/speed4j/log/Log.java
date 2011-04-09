@@ -36,10 +36,9 @@ public abstract class Log
      *  
      *  @param value True, if enabled.  False otherwise.
      */
-    public void setEnable(String value)
+    public void setEnable(boolean value)
     {
-        if( value.equals("false") ) m_enable = false;
-        else m_enable = true;
+        m_enable = value;
     }
     
     /**
