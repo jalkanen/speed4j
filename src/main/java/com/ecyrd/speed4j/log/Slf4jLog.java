@@ -22,10 +22,13 @@ import com.ecyrd.speed4j.StopWatch;
 
 /**
  *  A simple logger which does nothing except write the stopwatch data to
- *  the given SLF4J logger using {@link Logger#info(String)}
+ *  the given SLF4J logger using {@link Logger#info(String)}.
  */
 public class Slf4jLog extends Log
 {
+    /**
+     *  Stores the SLF4J logger instance.
+     */
     protected Logger m_log;
         
     /**
@@ -36,6 +39,9 @@ public class Slf4jLog extends Log
         m_log = LoggerFactory.getLogger(logName);
     }
         
+    /**
+     *  Logs using the INFO priority.
+     */
     @Override
     public void log(StopWatch sw)
     {

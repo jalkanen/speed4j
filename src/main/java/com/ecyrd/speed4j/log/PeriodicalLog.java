@@ -31,9 +31,26 @@ import com.ecyrd.speed4j.StopWatch;
  *  it via {@link #setName(String)}, you'll end up something that Speed4J
  *  picks up on its own.  Normally, if you use the property file to
  *  configure Speed4J, this gets automatically assigned for you.
+ *  <p>
+ *  The PeriodicalLog starts a new Thread to collect the statistics. Don't forget to shut it down with a call to {@link #shutdown()},
+ *  or else you might risk a memory leak.  This is a common problem with e.g. web applications, where redeployment
+ *  regularly causes these.
+ *  <p>
+ *  In a web app, you could set up your own ServletContextListener to ensure the proper shutdown:
+ *  <pre>
+ *  class MyListener implements ServletContextListener {
+ *     public void contextInitialized(ServletContextEvent sce) {}
+ *     
+ *     public void contextDestroyed(ServletContextEvent sce) {
+ *         StopWatchFactory.getInstance("myLoggerName").shutdown();
+ *     }
+ *  }
+ *  </pre>
+ *  PeriodicalLog adds its own JVM-wide shutdown hook, so you don't need to prepare for that.3
  */
 public class PeriodicalLog extends Slf4jLog implements DynamicMBean
 {
+    private static final int ATTRS_PER_ITEM = 5;
     private static final String ATTR_POSTFIX_MAX = "/max";
     private static final String ATTR_POSTFIX_MIN = "/min";
     private static final String ATTR_POSTFIX_STDDEV = "/stddev";
@@ -114,7 +131,8 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     
     /**
      *  Shuts down the collector thread and removes the JMX bean
-     *  if it is registered.
+     *  if it is registered.  It is <i>very</i> important to call this
+     *  or else you risk a memory leak.
      */
     @Override
     public void shutdown()
@@ -266,10 +284,10 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     
         if( stats != null )
         {
-            String key     = attribute.substring(0,attribute.indexOf('/'));
-            String postfix = attribute.substring(attribute.indexOf('/'));
+            String key     = attribute.substring(0,attribute.lastIndexOf('/'));
+            String postfix = attribute.substring(attribute.lastIndexOf('/'));
             
-            System.out.println("Key="+key+" postfix="+postfix);
+            //System.out.println("Key="+key+" postfix="+postfix);
             
             CollectedStatistics cs = m_statistics.get(key);
             
@@ -347,17 +365,17 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
 
         if( m_jmxAttributes != null )
         {
-            attributes = new MBeanAttributeInfo[m_jmxAttributes.length*5];
+            attributes = new MBeanAttributeInfo[m_jmxAttributes.length*ATTRS_PER_ITEM];
 
             for( int i = 0; i < m_jmxAttributes.length; i++ )
             {
                 String name = m_jmxAttributes[i].trim();
 
-                attributes[5*i]   = new MBeanAttributeInfo( name+ATTR_POSTFIX_AVG,    "double", "Average value (in milliseconds)", true, false, false );
-                attributes[5*i+1] = new MBeanAttributeInfo( name+ATTR_POSTFIX_STDDEV, "double", "Standard Deviation", true, false, false );
-                attributes[5*i+2] = new MBeanAttributeInfo( name+ATTR_POSTFIX_MIN,    "double", "Minimum value", true, false, false );
-                attributes[5*i+3] = new MBeanAttributeInfo( name+ATTR_POSTFIX_MAX,    "double", "Maximum value", true, false, false );
-                attributes[5*i+4] = new MBeanAttributeInfo( name+ATTR_POSTFIX_COUNT,  "int",    "Number of invocations", true, false, false );
+                attributes[ATTRS_PER_ITEM*i]   = new MBeanAttributeInfo( name+ATTR_POSTFIX_AVG,    "double", "Average value (in milliseconds)", true, false, false );
+                attributes[ATTRS_PER_ITEM*i+1] = new MBeanAttributeInfo( name+ATTR_POSTFIX_STDDEV, "double", "Standard Deviation", true, false, false );
+                attributes[ATTRS_PER_ITEM*i+2] = new MBeanAttributeInfo( name+ATTR_POSTFIX_MIN,    "double", "Minimum value", true, false, false );
+                attributes[ATTRS_PER_ITEM*i+3] = new MBeanAttributeInfo( name+ATTR_POSTFIX_MAX,    "double", "Maximum value", true, false, false );
+                attributes[ATTRS_PER_ITEM*i+4] = new MBeanAttributeInfo( name+ATTR_POSTFIX_COUNT,  "int",    "Number of invocations", true, false, false );
             }
         }
         //
