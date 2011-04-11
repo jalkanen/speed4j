@@ -36,6 +36,7 @@
   <scm>
     <url>http://github.com/jalkanen/speed4j</url>
     <connection>git://github.com/jalkanen/speed4j.git</connection>
+    <developerConnection>scm:git:git@github.com:jalkanen/speed4j.git</developerConnection>
   </scm>
   
   <developers>
@@ -110,7 +111,33 @@
           </execution>
         </executions>
       </plugin>
-      
+
+    <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <executions>
+            <execution>
+                <id>attach-sources</id>
+                <goals>
+                    <goal>jar</goal>
+                </goals>
+            </execution>
+        </executions>
+    </plugin>
+
+    <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <executions>
+            <execution>
+                <id>attach-javadocs</id>
+                <goals>
+                    <goal>jar</goal>
+                </goals>
+            </execution>
+        </executions>
+    </plugin>
+
     </plugins>
     
      <extensions>
@@ -123,6 +150,14 @@
     </extensions>
     
   </build>
+  
+  <!-- We'd like to use the sonatype parent because we upload to Sonatype repo. -->
+  <parent>
+    <groupId>org.sonatype.oss</groupId>
+    <artifactId>oss-parent</artifactId>
+    <version>7</version>
+  </parent>
+  
   
   <!--  This is for pushing for my own repo. -->
   <distributionManagement>
