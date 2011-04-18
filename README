@@ -7,12 +7,30 @@ these days...
 Speed4j has a dependency on SLF4J (see http://slf4j.org), which it uses to log
 its workings, but no other dependencies.
 
-This is alpha quality code, caveat emptor.
+INSTALLING
+==========
 
-Anyhoo, while you're waiting for better javadocs, here's the gist of the usage.
+Speed4j is available in Maven Central.  You can download the artifacts directly
+from
 
-SIMPLEST POSSIBLE
-=================
+http://repo2.maven.org/maven2/com/ecyrd/speed4j/speed4j/
+
+Or, you can put this into your pom.xml:
+
+<dependency>
+    <groupId>com.ecyrd.speed4j</groupId>
+    <artifactId>speed4j</artifactId>
+    <version>0.3</version>
+</dependency>
+
+Or, if you like Apache Ivy more, use this:
+
+<dependency org="com.ecyrd.speed4j" name="speed4j" rev="0.3"/>
+
+
+
+SIMPLEST POSSIBLE USAGE
+=======================
 
 public void myBusyMethod()
 {
