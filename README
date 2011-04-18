@@ -169,3 +169,10 @@ all the speed4j configuration module does is that it just simply calls the appro
 setter module - so if a property is called "speed4j.myLog.period=50" it will call
 setPeriod(50) on myLog.
  
+
+LICENSE INFORMATION
+===================
+
+Speed4j is distributed under the Apache Software License, version 2.0 (see LICENSE).
+
+Speed4j contains code (C) The Apache Software Foundation, 2003-2004.

@@ -1,0 +1,9 @@
+0.4
+===
+
+* Added 95th percentile calculation, courtesy of Jakarta Commons.
+
+0.3
+===
+
+First official release, yay!
