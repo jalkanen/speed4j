@@ -76,7 +76,7 @@ public class StopWatchFactoryTest
         
         StopWatchFactory swf = StopWatchFactory.getInstance(log);
         
-        int iterations = 100;
+        int iterations = 1000;
         
         for( int i = 0; i < iterations; i++ )
         {

@@ -50,7 +50,7 @@ import com.ecyrd.speed4j.StopWatch;
  */
 public class PeriodicalLog extends Slf4jLog implements DynamicMBean
 {
-    private static final int ATTRS_PER_ITEM = 5;
+    private static final int ATTRS_PER_ITEM = 6;
     private static final String ATTR_POSTFIX_MAX = "/max";
     private static final String ATTR_POSTFIX_MIN = "/min";
     private static final String ATTR_POSTFIX_STDDEV = "/stddev";
@@ -302,6 +302,8 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
                 return cs.getStdDev();
             if( postfix.equals(ATTR_POSTFIX_COUNT) )
                 return cs.getInvocations();
+            if( postfix.equals(ATTR_POSTFIX_95) )
+                return cs.getPercentile( 95 );
             
             throw new AttributeNotFoundException(attribute);
         }
@@ -377,6 +379,7 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
                 attributes[ATTRS_PER_ITEM*i+2] = new MBeanAttributeInfo( name+ATTR_POSTFIX_MIN,    "double", "Minimum value", true, false, false );
                 attributes[ATTRS_PER_ITEM*i+3] = new MBeanAttributeInfo( name+ATTR_POSTFIX_MAX,    "double", "Maximum value", true, false, false );
                 attributes[ATTRS_PER_ITEM*i+4] = new MBeanAttributeInfo( name+ATTR_POSTFIX_COUNT,  "int",    "Number of invocations", true, false, false );
+                attributes[ATTRS_PER_ITEM*i+5] = new MBeanAttributeInfo( name+ATTR_POSTFIX_95   ,  "double", "95th percentile", true, false, false );
             }
         }
         //
