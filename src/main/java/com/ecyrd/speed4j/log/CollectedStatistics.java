@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.ecyrd.speed4j.StopWatch;
+import com.ecyrd.speed4j.util.Percentile;
 
 /**
  *  Represents a statistics item which contains data which has been collected
@@ -135,4 +136,16 @@ public class CollectedStatistics
         return (s / n);
     }
 
+    /**
+     *  Get the nth percentile.  NB: This is also a fairly slow operation.
+     *  
+     *  @param percentile Percentile to get.
+     *  @return
+     */
+    public double getPercentile(int percentile)
+    {
+        Percentile p = new Percentile();
+        
+        return p.evaluate( m_times, percentile );
+    }
 }

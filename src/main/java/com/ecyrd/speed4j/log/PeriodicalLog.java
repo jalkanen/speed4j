@@ -56,6 +56,7 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     private static final String ATTR_POSTFIX_STDDEV = "/stddev";
     private static final String ATTR_POSTFIX_AVG = "/avg (ms)";
     private static final String ATTR_POSTFIX_COUNT = "/count";
+    private static final String ATTR_POSTFIX_95 = "/95";
     
     private Queue<StopWatch> m_queue              = new ConcurrentLinkedQueue<StopWatch>();
     private Thread           m_collectorThread;
@@ -193,12 +194,12 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
         
         printf("Statistics from %tc to %tc", new Date(lastRun), new Date());
         
-        printf("Tag                                       Avg(ms)      Min      Max  Std Dev   Count");
+        printf("Tag                                       Avg(ms)      Min      Max  Std Dev     95th   Count");
         
         for( Map.Entry<String,CollectedStatistics> e : m_statistics.entrySet() )
         {
             CollectedStatistics cs = e.getValue();
-            printf("%-40s %8.2f %8.2f %8.2f %8.2f %7d", e.getKey(),cs.getAverageMS(), cs.getMin(), cs.getMax(), cs.getStdDev(), cs.getInvocations());
+            printf("%-40s %8.2f %8.2f %8.2f %8.2f %8.2f %7d", e.getKey(),cs.getAverageMS(), cs.getMin(), cs.getMax(), cs.getStdDev(), cs.getPercentile( 95 ), cs.getInvocations());
         }
         
         printf("");
