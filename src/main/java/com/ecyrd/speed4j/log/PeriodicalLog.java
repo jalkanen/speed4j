@@ -146,7 +146,7 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
             //
             //  Remove MBean
             //
-            if( m_mbeanServer.isRegistered(getJMXName()) )
+            if( m_mbeanServer != null && m_mbeanServer.isRegistered(getJMXName()) )
                 m_mbeanServer.unregisterMBean(getJMXName());
         }
         catch (Exception e)
