@@ -1,3 +1,13 @@
+0.6
+===
+
+* Improved thread safety in PeriodicalLog calculations.
+
+0.5
+===
+
+* Fixed NPE during PeriodicalLog shutdown.
+
 0.4
 ===
 
