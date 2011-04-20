@@ -33,6 +33,7 @@ public class StopWatch implements Serializable
 
     private static final long serialVersionUID = 5154481161113185022L;
 
+    private long   m_creation;
     private long   m_startNanos;
     private long   m_stopNanos;
     private String m_tag;
@@ -54,6 +55,7 @@ public class StopWatch implements Serializable
     {
         m_tag = tag;
         m_message = message;
+        m_creation = System.currentTimeMillis();
         start();
     }
     
@@ -169,6 +171,16 @@ public class StopWatch implements Serializable
     }
     
     /**
+     *  Returns the moment in time at which this StopWatch was created (milliseconds since EPOCH).
+     *  
+     *  @return Start time.
+     */
+    public long getCreationTime()
+    {
+        return m_creation;
+    }
+    
+    /**
      *  Returns a human-readable string.  This is a slowish op, so don't call unnecessarily.
      *  Do NOT rely this in being any particular format.
      */
@@ -244,6 +256,7 @@ public class StopWatch implements Serializable
         StopWatch sw = new StopWatch( m_tag, m_message );
         sw.m_startNanos = m_startNanos;
         sw.m_stopNanos = m_stopNanos != 0 ? m_stopNanos : System.nanoTime();
+        sw.m_creation = m_creation;
         
         return sw;
     }

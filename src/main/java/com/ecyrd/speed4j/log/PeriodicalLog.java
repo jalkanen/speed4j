@@ -170,8 +170,21 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     
     /**
      *  Empties the queue and calculates the results.
+     *  Thread-safety is done as follows: In order to avoid concurrent modifications,
+     *  we have a thread-safe Queue object.  We pull StopWatches from the head of
+     *  the queue, at which point we become the sole owners of the object.
+     *  <p>
+     *  If the queue has objects which are newer than what we're supposed to handle,
+     *  we leave them in the queue and stop processing at that time.
+     *  <p>
+     *  This should be the only method that changes the statistics object, so it does
+     *  not require locking either.
+     *  <p>
+     *  TODO: There is a known problem if there are tons of Threads and our calculations take
+     *  a very long time, and Thread.sleep() becomes inaccurate: the finalMoment will start 
+     *  to slip forward.
      */
-    private void doLog(long lastRun)
+    private void doLog(long lastRun, long finalMoment)
     {
         if( m_log == null || !m_log.isInfoEnabled() ) return;
         
@@ -179,8 +192,17 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
         
         m_statistics = new HashMap<String,CollectedStatistics>();
         
-        while( null != (sw = m_queue.poll()) )
+        // Peek at the queue and see if there is someone there.
+        while( null != (sw = m_queue.peek()) )
         {
+            if( sw.getCreationTime() > finalMoment ) 
+            {
+                break;
+            }
+            
+            // Remove the object from the head of the queue.
+            m_queue.remove();
+            
             CollectedStatistics cs = m_statistics.get(sw.getTag());
             
             if( cs == null ) 
@@ -192,7 +214,7 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
             cs.add( sw );
         }
         
-        printf("Statistics from %tc to %tc", new Date(lastRun), new Date());
+        printf("Statistics from %tc to %tc", new Date(lastRun), new Date(finalMoment));
         
         printf("Tag                                       Avg(ms)      Min      Max  Std Dev     95th   Count");
         
@@ -250,7 +272,7 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
                 
                 if( (now - lastRun)/1000 >= m_periodSeconds )
                 {
-                    doLog(lastRun);
+                    doLog(lastRun,now);
                     lastRun = now;
                 }
             }
@@ -258,7 +280,7 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
             //
             // Do final log
             //
-            doLog(lastRun);
+            doLog(lastRun,System.currentTimeMillis());
         }
         
     }
