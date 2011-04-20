@@ -131,19 +131,21 @@ tags.
 Finally, it will also output a collected string to the given SLF4J logger, resulting into
 something that looks like this:
 
-73335 [Thread-2] INFO foo - Statistics from Sun Jan 23 00:30:50 EET 2011 to Sun Jan 23 00:30:55 EET 2011
-73335 [Thread-2] INFO foo - Tag                                       Avg(ms)      Min      Max  Std Dev   Count
-73335 [Thread-2] INFO foo - iteration:9                                 19.10    19.04    19.90     0.15      29
-73335 [Thread-2] INFO foo - iteration:8                                 18.22    18.04    20.26     0.44      33
-73336 [Thread-2] INFO foo - iteration:7                                 17.06    17.04    17.08     0.01      38
-73336 [Thread-2] INFO foo - iteration:6                                 16.11    16.04    16.94     0.21      33
-73336 [Thread-2] INFO foo - iteration:5                                 15.08    15.04    15.47     0.08      30
-73336 [Thread-2] INFO foo - iteration:4                                 14.07    14.04    14.20     0.03      30
-73337 [Thread-2] INFO foo - iteration:3                                 13.76    13.03    31.18     3.14      43
-73337 [Thread-2] INFO foo - iteration:2                                 12.11    12.03    13.48     0.26      30
-73337 [Thread-2] INFO foo - iteration:1                                 11.09    11.04    12.11     0.16      45
-73337 [Thread-2] INFO foo - iteration:0                                 10.09    10.03    10.70     0.12      34
+19400 [Thread-3] INFO foo - Statistics from Tue Apr 19 23:11:15 EEST 2011 to Tue Apr 19 23:11:20 EEST 2011
+19400 [Thread-3] INFO foo - Tag                                       Avg(ms)      Min      Max  Std Dev     95th   Count
+19401 [Thread-3] INFO foo - iteration:9                                 19.18    19.07    19.88     0.14    19.60      28
+19401 [Thread-3] INFO foo - iteration:8                                 18.17    18.09    18.33     0.06    18.32      26
+19402 [Thread-3] INFO foo - iteration:7                                 17.19    17.07    17.48     0.08    17.43      26
+19402 [Thread-3] INFO foo - iteration:6                                 16.17    16.07    16.26     0.05    16.25      23
+19402 [Thread-3] INFO foo - iteration:5                                 15.18    15.08    15.31     0.06    15.29      27
+19403 [Thread-3] INFO foo - iteration:4                                 14.16    14.08    14.28     0.06    14.28      21
+19403 [Thread-3] INFO foo - iteration:3                                 13.17    13.08    13.26     0.05    13.26      21
+19404 [Thread-3] INFO foo - iteration:2                                 12.17    12.08    12.25     0.05    12.25      32
+19404 [Thread-3] INFO foo - iteration:1                                 11.16    11.07    11.30     0.06    11.30      16
+19405 [Thread-3] INFO foo - iteration:0                                 10.16    10.08    10.27     0.05    10.26      24
 
+(The 95th means the 95th percentile, i.e. 95% of all calls stayed under this limit.  This is very useful
+for figuring out which methods have wildy varying performance.)
 
 PROGRAMMATIC CONFIGURATION
 ==========================
