@@ -9,11 +9,11 @@ import com.ecyrd.speed4j.log.PeriodicalLog;
 public class MultiThreadTest
 {
     StopWatchFactory swf;
-    
+    PeriodicalLog pl;
     @Before
     public void setUp()
     {
-        PeriodicalLog pl = new PeriodicalLog();
+        pl = new PeriodicalLog();
         
         pl.setName( "multithread" );
         pl.setPeriod( 5 );
@@ -25,7 +25,7 @@ public class MultiThreadTest
     @After
     public void cleanUp()
     {
-        swf.shutdown();
+        pl.shutdown();
     }
     
     // This test fails if there's a ConcurrentModificationException or similar being thrown.
