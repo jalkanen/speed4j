@@ -43,7 +43,7 @@ public class CollectedStatistics
      *  
      *  @param sw StopWatch to add.
      */
-    public void add(StopWatch sw)
+    public synchronized void add(StopWatch sw)
     {
         double timeInMs = sw.getTimeNanos() / NANOS_IN_MILLIS;
         m_times.add(timeInMs);
@@ -57,7 +57,7 @@ public class CollectedStatistics
      *  
      *  @return Number of StopWatches.
      */
-    public int getInvocations()
+    public synchronized int getInvocations()
     {
         return m_times.size();
     }
@@ -68,7 +68,7 @@ public class CollectedStatistics
      *  
      *  @return Fastest in milliseconds.
      */
-    public double getMin()
+    public synchronized double getMin()
     {
         return m_min;
     }
@@ -79,7 +79,7 @@ public class CollectedStatistics
      *  
      *  @return Slowest in milliseconds.
      */
-    public double getMax()
+    public synchronized double getMax()
     {
         return m_max;
     }
@@ -90,7 +90,7 @@ public class CollectedStatistics
      *  
      *  @return The average in milliseconds.
      */
-    public double getAverageMS()
+    public synchronized double getAverageMS()
     {
         double result = 0.0;
     
@@ -108,7 +108,7 @@ public class CollectedStatistics
      *  
      *  @return The standard deviation.
      */
-    public double getStdDev()
+    public synchronized double getStdDev()
     {
         return Math.sqrt(variance());
     }
@@ -119,7 +119,7 @@ public class CollectedStatistics
      *  
      *  @return The variance.
      */
-    public double variance() 
+    public synchronized double variance() 
     {
         long n = 0;
         double mean = 0;
@@ -142,7 +142,7 @@ public class CollectedStatistics
      *  @param percentile Percentile to get.
      *  @return
      */
-    public double getPercentile(int percentile)
+    public synchronized double getPercentile(int percentile)
     {
         Percentile p = new Percentile();
         
