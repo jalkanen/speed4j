@@ -1,3 +1,9 @@
+0.7
+===
+
+* Fixes issues #1 & #2, where the Collector Thread was misbehaving.
+  (Yay! First issues!)
+
 0.6
 ===
 
