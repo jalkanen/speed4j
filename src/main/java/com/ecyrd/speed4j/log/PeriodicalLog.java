@@ -72,6 +72,11 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
      */
     public PeriodicalLog()
     {
+        m_collectorThread = new CollectorThread();
+        m_collectorThread.setName( "Speed4J PeriodicalLog Collector Thread" );
+        m_collectorThread.setDaemon( true );
+        m_collectorThread.start();
+        
         Runtime.getRuntime().addShutdownHook( new Thread() {
             @Override
             public void run()
@@ -84,16 +89,6 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     @Override
     public void log(StopWatch sw)
     {
-        //
-        //  Start the collector lazily.
-        //
-        if( m_collectorThread == null )
-        {
-            m_collectorThread = new CollectorThread();
-
-            m_collectorThread.start();        
-        }
-        
         m_queue.add( sw.freeze() );
     }
     
