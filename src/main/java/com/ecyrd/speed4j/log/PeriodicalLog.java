@@ -314,6 +314,8 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
             
             CollectedStatistics cs = m_statistics.get(key);
             
+            if( cs == null ) return null; // No value yet.
+            
             if( postfix.equals(ATTR_POSTFIX_AVG))             
                 return cs.getAverageMS();
             if( postfix.equals(ATTR_POSTFIX_MAX))
