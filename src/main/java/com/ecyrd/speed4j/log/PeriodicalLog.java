@@ -17,6 +17,7 @@ package com.ecyrd.speed4j.log;
 
 import java.lang.management.ManagementFactory;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.management.*;
@@ -54,7 +55,7 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     private static final String ATTR_POSTFIX_MAX = "/max";
     private static final String ATTR_POSTFIX_MIN = "/min";
     private static final String ATTR_POSTFIX_STDDEV = "/stddev";
-    private static final String ATTR_POSTFIX_AVG = "/avg (ms)";
+    private static final String ATTR_POSTFIX_AVG = "/avg";
     private static final String ATTR_POSTFIX_COUNT = "/count";
     private static final String ATTR_POSTFIX_95 = "/95";
     
@@ -65,7 +66,7 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     private MBeanServer      m_mbeanServer        = null;
     private String[]         m_jmxAttributes      = null;
     private MBeanInfo        m_beanInfo;
-    private HashMap<String,CollectedStatistics> m_statistics;
+    private Map<String,JmxStatistics>       m_jmxStatistics;
     
     /**
      *  Creates an instance of PeriodicalLog.
@@ -184,8 +185,8 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
         if( m_log == null || !m_log.isInfoEnabled() ) return;
         
         StopWatch sw;
-        
-        m_statistics = new HashMap<String,CollectedStatistics>();
+
+        HashMap<String,CollectedStatistics> stats = new HashMap<String,CollectedStatistics>();
         
         // Peek at the queue and see if there is someone there.
         while( null != (sw = m_queue.peek()) )
@@ -198,12 +199,12 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
             // Remove the object from the head of the queue.
             m_queue.remove();
             
-            CollectedStatistics cs = m_statistics.get(sw.getTag());
+            CollectedStatistics cs = stats.get(sw.getTag());
             
             if( cs == null ) 
             {
                 cs = new CollectedStatistics();
-                m_statistics.put( sw.getTag(), cs );
+                stats.put( sw.getTag(), cs );
             }
             
             cs.add( sw );
@@ -213,10 +214,35 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
         
         printf("Tag                                       Avg(ms)      Min      Max  Std Dev     95th   Count");
         
-        for( Map.Entry<String,CollectedStatistics> e : m_statistics.entrySet() )
+        for( Map.Entry<String,CollectedStatistics> e : stats.entrySet() )
         {
             CollectedStatistics cs = e.getValue();
             printf("%-40s %8.2f %8.2f %8.2f %8.2f %8.2f %7d", e.getKey(),cs.getAverageMS(), cs.getMin(), cs.getMax(), cs.getStdDev(), cs.getPercentile( 95 ), cs.getInvocations());
+        }
+        
+        //
+        //  Finally, store these to the JMX attribute list
+        //
+        
+        if( m_jmxAttributes != null )
+        {
+            m_jmxStatistics = new ConcurrentHashMap<String, PeriodicalLog.JmxStatistics>();
+            
+            for( String name : m_jmxAttributes )
+            {
+                // TODO: Unfortunately we now calculate the stddev and 95th percentile twice, which is a bit of overhead.
+                String n = name.trim();
+                CollectedStatistics cs = stats.get(n);
+                JmxStatistics js = new JmxStatistics();
+                js.count = cs.getInvocations();
+                js.max = cs.getMax();
+                js.min = cs.getMin();
+                js.mean = cs.getAverageMS();
+                js.perc95 = cs.getPercentile( 95 );
+                js.stddev = cs.getStdDev();
+            
+                m_jmxStatistics.put(n, js);
+            }
         }
         
         printf("");
@@ -298,7 +324,7 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     
     public Object getAttribute(String attribute) throws AttributeNotFoundException, MBeanException, ReflectionException
     {
-        HashMap<String, CollectedStatistics> stats = m_statistics;
+        Map<String, JmxStatistics> stats = m_jmxStatistics;
     
         if( stats != null )
         {
@@ -307,22 +333,22 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
             
             //System.out.println("Key="+key+" postfix="+postfix);
             
-            CollectedStatistics cs = m_statistics.get(key);
+            JmxStatistics cs = stats.get(key);
             
             if( cs == null ) return null; // No value yet.
             
             if( postfix.equals(ATTR_POSTFIX_AVG))             
-                return cs.getAverageMS();
+                return cs.mean;
             if( postfix.equals(ATTR_POSTFIX_MAX))
-                return cs.getMax();
+                return cs.max;
             if( postfix.equals(ATTR_POSTFIX_MIN))
-                return cs.getMin();
+                return cs.min;
             if( postfix.equals(ATTR_POSTFIX_STDDEV) )
-                return cs.getStdDev();
+                return cs.stddev;
             if( postfix.equals(ATTR_POSTFIX_COUNT) )
-                return cs.getInvocations();
+                return cs.count;
             if( postfix.equals(ATTR_POSTFIX_95) )
-                return cs.getPercentile( 95 );
+                return cs.perc95;
             
             throw new AttributeNotFoundException(attribute);
         }
@@ -414,6 +440,16 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
                                     constructors,
                                     operations,
                                     notifications );
+    }
+    
+    private static class JmxStatistics
+    {
+        public double mean;
+        public double stddev;
+        public double min;
+        public double max;
+        public int    count;
+        public double perc95;
     }
 
 }
