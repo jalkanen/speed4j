@@ -233,6 +233,10 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
                 // TODO: Unfortunately we now calculate the stddev and 95th percentile twice, which is a bit of overhead.
                 String n = name.trim();
                 CollectedStatistics cs = stats.get(n);
+                
+                if ( cs == null )
+                    continue;
+                
                 JmxStatistics js = new JmxStatistics();
                 js.count = cs.getInvocations();
                 js.max = cs.getMax();
@@ -240,7 +244,6 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
                 js.mean = cs.getAverageMS();
                 js.perc95 = cs.getPercentile( 95 );
                 js.stddev = cs.getStdDev();
-            
                 m_jmxStatistics.put(n, js);
             }
         }

@@ -72,7 +72,7 @@ public class StopWatchFactoryTest
         log.setSlf4jLogname("foo");
         log.setPeriod(5);
         log.setName("testLog");
-        log.setJmx("iteration:1,iteration:2,iteration:3,iteration:4");
+        log.setJmx("iteration:1,iteration:2,iteration:3,iteration:4,iteration:N");
         
         StopWatchFactory swf = StopWatchFactory.getInstance(log);
         
