@@ -51,6 +51,7 @@ import com.ecyrd.speed4j.StopWatch;
  */
 public class PeriodicalLog extends Slf4jLog implements DynamicMBean
 {
+    private static final String JMX_QUEUE_LENGTH = "StopWatchQueueLength";
     private static final int ATTRS_PER_ITEM = 6;
     private static final String ATTR_POSTFIX_MAX = "/max";
     private static final String ATTR_POSTFIX_MIN = "/min";
@@ -327,6 +328,9 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     
     public Object getAttribute(String attribute) throws AttributeNotFoundException, MBeanException, ReflectionException
     {
+        if( attribute.equals( JMX_QUEUE_LENGTH ) )
+            return m_queue.size();
+        
         Map<String, JmxStatistics> stats = m_jmxStatistics;
     
         if( stats != null )
@@ -416,7 +420,7 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
 
         if( m_jmxAttributes != null )
         {
-            attributes = new MBeanAttributeInfo[m_jmxAttributes.length*ATTRS_PER_ITEM];
+            attributes = new MBeanAttributeInfo[m_jmxAttributes.length*ATTRS_PER_ITEM+1];
 
             for( int i = 0; i < m_jmxAttributes.length; i++ )
             {
@@ -429,6 +433,10 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
                 attributes[ATTRS_PER_ITEM*i+4] = new MBeanAttributeInfo( name+ATTR_POSTFIX_COUNT,  "int",    "Number of invocations", true, false, false );
                 attributes[ATTRS_PER_ITEM*i+5] = new MBeanAttributeInfo( name+ATTR_POSTFIX_95   ,  "double", "95th percentile", true, false, false );
             }
+            
+            attributes[attributes.length-1] = new MBeanAttributeInfo( JMX_QUEUE_LENGTH, "int", 
+                                                                      "Current StopWatch processing queue length (i.e. how many StopWatches are currently unprocessed)", 
+                                                                      true, false, false );
         }
         //
         //  Create the actual BeanInfo instance.
