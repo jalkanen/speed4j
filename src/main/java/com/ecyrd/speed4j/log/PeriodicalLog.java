@@ -19,6 +19,9 @@ import java.lang.management.ManagementFactory;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import javax.management.*;
 
@@ -67,6 +70,7 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     private String[]         m_jmxAttributes      = null;
     private MBeanInfo        m_beanInfo;
     private Map<String,JmxStatistics>       m_jmxStatistics;
+    private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     
     /**
      *  Creates an instance of PeriodicalLog.
@@ -76,7 +80,7 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
         m_collectorThread = new CollectorThread();
         m_collectorThread.setName( "Speed4J PeriodicalLog Collector Thread" );
         m_collectorThread.setDaemon( true );
-        m_collectorThread.start();
+        scheduler.scheduleWithFixedDelay(m_collectorThread, m_periodSeconds, m_periodSeconds, TimeUnit.SECONDS);
         
         Runtime.getRuntime().addShutdownHook( new Thread() {
             @Override
@@ -135,7 +139,7 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     public void shutdown()
     {
         m_running = false;
-        if( m_collectorThread != null ) m_collectorThread.interrupt();
+        scheduler.shutdown();        
 
         try
         {
@@ -273,38 +277,14 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
      */
     private class CollectorThread extends Thread
     {
+        long lastRun = System.currentTimeMillis();
+        
         @Override
         public void run()
-        {
-            long lastRun = System.currentTimeMillis();
-            
-            // Round to the nearest periodSeconds
-            lastRun = (lastRun / (1000*m_periodSeconds)) * (1000*m_periodSeconds);
-            
-            while(m_running)
-            {
-                try
-                {
-                    Thread.sleep(1000L);
-                }
-                catch(Throwable t)
-                {
-                    // Ignore all nasties, keep this thing running until requested.
-                }                
-                
-                long now = System.currentTimeMillis();
-                
-                if( (now - lastRun)/1000 >= m_periodSeconds )
-                {
-                    doLog(lastRun,now);
-                    lastRun = now;
-                }
-            }
-            
-            //
-            // Do final log
-            //
-            doLog(lastRun,System.currentTimeMillis());
+        {            
+            long now = System.currentTimeMillis();
+            doLog(lastRun, now);
+            lastRun = now;            
         }
         
     }
