@@ -15,9 +15,6 @@
 */
 package com.ecyrd.speed4j.log;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.ecyrd.speed4j.StopWatch;
 import com.ecyrd.speed4j.util.Percentile;
 
@@ -32,7 +29,7 @@ import com.ecyrd.speed4j.util.Percentile;
  */
 public class CollectedStatistics
 {
-    private List<Double> m_times = new ArrayList<Double>();
+    private DoubleList m_times = new DoubleList();
     private double m_min = Double.MAX_VALUE;
     private double m_max = 0.0;
     
@@ -94,7 +91,7 @@ public class CollectedStatistics
     {
         double result = 0.0;
     
-        for( Double d : m_times )
+        for( Double d : m_times.m_values )
         {
             result += d;
         }
@@ -125,7 +122,7 @@ public class CollectedStatistics
         double mean = 0;
         double s = 0.0;
 
-        for (double x : m_times) 
+        for (double x : m_times.m_values) 
         {
             n++;
             double delta = x - mean;
@@ -146,6 +143,39 @@ public class CollectedStatistics
     {
         Percentile p = new Percentile();
         
-        return p.evaluate( m_times, percentile );
+        return p.evaluate( m_times.m_values, 0, m_times.size(), percentile );
+    }
+    
+    /**
+     *  A very simple class to hold a number of double values in memory fairly
+     *  optimally (this is better than using a Double array, since Doubles take
+     *  an extra 8 bytes of overhead per instance compared to regular double).
+     */
+    private static final class DoubleList
+    {
+        public double[] m_values = new double[256];
+        public int      m_size;
+        
+        public void add(double d)
+        {
+            ensureCapacity(m_size+1);
+            m_values[m_size++] = d;
+        }
+        
+        public int size()
+        {
+            return m_size;
+        }
+
+        private void ensureCapacity(int capacity) 
+        {
+            if( capacity > m_values.length ) 
+            {
+              int newsize = ((m_values.length * 3) / 2) + 1;
+              double[] olddata = m_values;
+              m_values = new double[newsize < capacity ? capacity : newsize];
+              System.arraycopy(olddata, 0, m_values, 0, m_size);
+            }
+        }
     }
 }

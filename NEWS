@@ -1,3 +1,17 @@
+0.10
+====
+
+* Much improved memory management: The StopWatch queue size has now a maximum limit
+  (to prevent a case where a producer would just keep sending stuff that we couldn't
+  process fast enough).  Also, the StopWatch queues are now emptied as quickly
+  as possible. 
+  
+* Added new internal JMX attribute: "DroppedStopWatches" to monitor StopWatches
+  which are dropped when they can't fit in the queue.
+
+* You can now shut up the PeriodicalLog logging by simply setting the slf4jLogName
+  to an empty string.
+
 0.9
 ===
 

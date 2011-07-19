@@ -33,10 +33,18 @@ public class Slf4jLog extends Log
         
     /**
      *  Set the name of the logger that this logger should log to.
+     *  If you set it to an empty string, will shut up completely.
      */
     public void setSlf4jLogname(String logName)
     {
-        m_log = LoggerFactory.getLogger(logName);
+        if( logName.isEmpty() ) 
+        {
+            m_log = null;
+        }
+        else
+        {
+            m_log = LoggerFactory.getLogger(logName);
+        }
     }
         
     /**
@@ -48,7 +56,7 @@ public class Slf4jLog extends Log
         //
         //  This avoids calling the possibly expensive sw.toString() method if logging is disabled.
         //
-        if( m_log.isInfoEnabled() )
+        if( m_log != null && m_log.isInfoEnabled() )
         {
             m_log.info(sw.toString());
         }

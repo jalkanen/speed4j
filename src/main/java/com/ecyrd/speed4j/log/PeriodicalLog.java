@@ -16,14 +16,19 @@
 package com.ecyrd.speed4j.log;
 
 import java.lang.management.ManagementFactory;
-import java.util.*;
+import java.util.Date;
+import java.util.Formatter;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.management.*;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.ecyrd.speed4j.ConfigurationException;
 import com.ecyrd.speed4j.StopWatch;
@@ -50,12 +55,16 @@ import com.ecyrd.speed4j.StopWatch;
  *     }
  *  }
  *  </pre>
- *  PeriodicalLog adds its own JVM-wide shutdown hook, so you don't need to prepare for that.3
+ *  PeriodicalLog adds its own JVM-wide shutdown hook, so you don't need to prepare for that.
+ *  <p>
+ *  The size of the log is limited to make sure that it does not grow out of bounds.  You
+ *  may set the value using {@link #setMaxQueueSize(int)}.  The default value is {@value #DEFAULT_MAX_QUEUE_SIZE}.
  */
 public class PeriodicalLog extends Slf4jLog implements DynamicMBean
 {
     private static final String JMX_QUEUE_LENGTH = "StopWatchQueueLength";
-    private static final int ATTRS_PER_ITEM = 6;
+    private static final String JMX_DROPPED_STOPWATCHES = "DroppedStopWatches";
+    private static final int    ATTRS_PER_ITEM = 6;
     private static final String ATTR_POSTFIX_MAX = "/max";
     private static final String ATTR_POSTFIX_MIN = "/min";
     private static final String ATTR_POSTFIX_STDDEV = "/stddev";
@@ -63,14 +72,21 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     private static final String ATTR_POSTFIX_COUNT = "/count";
     private static final String ATTR_POSTFIX_95 = "/95";
     
-    private Queue<StopWatch> m_queue              = new ConcurrentLinkedQueue<StopWatch>();
-    private Thread           m_collectorThread;
+    private static final int DEFAULT_MAX_QUEUE_SIZE = 100000;
+    
+    private LinkedBlockingDeque<StopWatch> m_queue = new LinkedBlockingDeque<StopWatch>(DEFAULT_MAX_QUEUE_SIZE);
+    private CollectorThread  m_collectorThread;
     private int              m_periodSeconds      = 30;
+    private boolean          m_stopCollector      = false;
     private MBeanServer      m_mbeanServer        = null;
     private String[]         m_jmxAttributes      = null;
     private MBeanInfo        m_beanInfo;
+    private AtomicLong       m_rejectedStopWatches = new AtomicLong();
+    private ObjectName       m_jmxName;
     private Map<String,JmxStatistics>       m_jmxStatistics;
-    private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private Map<String,CollectedStatistics> m_stats = new HashMap<String,CollectedStatistics>();
+    
+    private static Logger    log = LoggerFactory.getLogger( PeriodicalLog.class );
     
     /**
      *  Creates an instance of PeriodicalLog.
@@ -80,7 +96,9 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
         m_collectorThread = new CollectorThread();
         m_collectorThread.setName( "Speed4J PeriodicalLog Collector Thread" );
         m_collectorThread.setDaemon( true );
-        scheduler.scheduleWithFixedDelay(m_collectorThread, m_periodSeconds, m_periodSeconds, TimeUnit.SECONDS);
+        m_collectorThread.start();
+        
+        rebuildJmx();
         
         Runtime.getRuntime().addShutdownHook( new Thread() {
             @Override
@@ -94,11 +112,12 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     @Override
     public void log(StopWatch sw)
     {
-        m_queue.add( sw.freeze() );
+        if( !m_queue.offer( sw.freeze() ) ) m_rejectedStopWatches.getAndIncrement();
     }
     
     /**
-     *  Set the tags which are shown via JMX.
+     *  Set the tags which are shown via JMX.  As a side-effect, will unregister
+     *  and reregister the JMX Management Bean, so you can set these at runtime.
      *  
      *  @param value A comma-separated list of tags which are shown via JMX.
      */
@@ -106,6 +125,32 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     {
         m_jmxAttributes = value.split(",");
         
+        rebuildJmx();
+    }
+
+    /**
+     *  For limiting the queue size in case the calculation is simply too slow
+     *  and events are gathering too fast.  Once the queue becomes too big,
+     *  events are silently dropped, and the JMX attribute {@value #JMX_DROPPED_STOPWATCHES} will be
+     *  incremented.
+     *  <p>
+     *  Note that setting this value will discard the existing events in the queue,
+     *  so while you can set this while speed4j is running, you will lose some data.
+     *  <p>
+     *  The default size is {@value #DEFAULT_MAX_QUEUE_SIZE}.
+     *  
+     *  @param size The new maximum size.
+     */
+    public void setMaxQueueSize(int size)
+    {
+        m_queue = new LinkedBlockingDeque<StopWatch>(size);
+    }
+    
+    /**
+     *  Rebuild the JMX bean.
+     */
+    private void rebuildJmx()
+    {
         m_mbeanServer = ManagementFactory.getPlatformMBeanServer();
             
         try
@@ -113,16 +158,32 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
             buildMBeanInfo();
             
             //
-            //  Remove and reinstall from the MBean registry if it already exists.
+            //  Remove and reinstall from the MBean registry if it already exists.  Also
+            //  remove previous instances.
             //
-            if( m_mbeanServer.isRegistered(getJMXName()) )
-                m_mbeanServer.unregisterMBean(getJMXName());
+            ObjectName newName = getJMXName();
             
-            m_mbeanServer.registerMBean( this, getJMXName() );
+            if( m_mbeanServer.isRegistered(newName) )
+            {
+                log.debug("Removing already registered bean {}", newName);
+                m_mbeanServer.unregisterMBean(newName);
+            }
+            
+            if( m_jmxName != null && !newName.equals(m_jmxName) && m_mbeanServer.isRegistered(m_jmxName) )
+            {
+                log.debug("Removing the old bean {}", m_jmxName);
+                m_mbeanServer.unregisterMBean(m_jmxName);
+            }
+            
+            m_jmxName = getJMXName();
+            
+            m_mbeanServer.registerMBean( this, m_jmxName );
+            
+            log.debug("Registered new JMX bean '{}'", m_jmxName);
         }
         catch (InstanceAlreadyExistsException e)
         {
-            // OK
+            log.debug("JMX bean '{}' already registered, continuing...");
         }
         catch (Exception e)
         {
@@ -138,8 +199,9 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     @Override
     public void shutdown()
     {
-        scheduler.shutdown();        
-
+        m_stopCollector = true;      
+        if( m_collectorThread != null ) m_collectorThread.interrupt();
+        
         try
         {
             //
@@ -168,6 +230,46 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     }
     
     /**
+     *  Empties the StopWatch queue, and builds the statistics on the go.
+     *  This is run in the Collector Thread context.  Leaves the queue
+     *  when the items in it start later than what we need.
+     *  
+     *  @return true, if the queue is not emptied and there are events
+     *          in it where the finalMoment is achieved.
+     */
+    private boolean emptyQueue(long finalMoment)
+    {
+        StopWatch sw;
+        
+        try
+        {
+            while( null != (sw = m_queue.poll(100, TimeUnit.MILLISECONDS)) )
+            {
+                if( sw.getCreationTime() > finalMoment ) 
+                {
+                    // Return this one back in the queue; as it belongs to the
+                    // next period already.
+                    m_queue.addFirst(sw);
+                    return true;
+                }
+            
+                CollectedStatistics cs = m_stats.get(sw.getTag());
+            
+                if( cs == null ) 
+                {
+                    cs = new CollectedStatistics();
+                    m_stats.put( sw.getTag(), cs );
+                }
+            
+                cs.add( sw );
+            }
+        }
+        catch( InterruptedException e ) {} // Just return immediately
+        
+        return false;
+    }
+    
+    /**
      *  Empties the queue and calculates the results.
      *  Thread-safety is done as follows: In order to avoid concurrent modifications,
      *  we have a thread-safe Queue object.  We pull StopWatches from the head of
@@ -178,46 +280,20 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
      *  <p>
      *  This should be the only method that changes the statistics object, so it does
      *  not require locking either.
-     *  <p>
-     *  TODO: There is a known problem if there are tons of Threads and our calculations take
-     *  a very long time, and Thread.sleep() becomes inaccurate: the finalMoment will start 
-     *  to slip forward.
      */
     private void doLog(long lastRun, long finalMoment)
     {
-        if( m_log == null || !m_log.isInfoEnabled() ) return;
-        
-        StopWatch sw;
-
-        HashMap<String,CollectedStatistics> stats = new HashMap<String,CollectedStatistics>();
-        
-        // Peek at the queue and see if there is someone there.
-        while( null != (sw = m_queue.peek()) )
+        if( m_log == null || !m_log.isInfoEnabled() ) 
         {
-            if( sw.getCreationTime() > finalMoment ) 
-            {
-                break;
-            }
-            
-            // Remove the object from the head of the queue.
-            m_queue.remove();
-            
-            CollectedStatistics cs = stats.get(sw.getTag());
-            
-            if( cs == null ) 
-            {
-                cs = new CollectedStatistics();
-                stats.put( sw.getTag(), cs );
-            }
-            
-            cs.add( sw );
+            resetForNextPeriod();
+            return;
         }
-        
+         
         printf("Statistics from %tc to %tc", new Date(lastRun), new Date(finalMoment));
         
         printf("Tag                                       Avg(ms)      Min      Max  Std Dev     95th   Count");
-        
-        for( Map.Entry<String,CollectedStatistics> e : stats.entrySet() )
+
+        for( Map.Entry<String,CollectedStatistics> e : m_stats.entrySet() )
         {
             CollectedStatistics cs = e.getValue();
             printf("%-40s %8.2f %8.2f %8.2f %8.2f %8.2f %7d", e.getKey(),cs.getAverageMS(), cs.getMin(), cs.getMax(), cs.getStdDev(), cs.getPercentile( 95 ), cs.getInvocations());
@@ -235,7 +311,7 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
             {
                 // TODO: Unfortunately we now calculate the stddev and 95th percentile twice, which is a bit of overhead.
                 String n = name.trim();
-                CollectedStatistics cs = stats.get(n);
+                CollectedStatistics cs = m_stats.get(n);
                 
                 if ( cs == null )
                     continue;
@@ -252,6 +328,12 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
         }
         
         printf("");
+        resetForNextPeriod();
+    }
+    
+    private void resetForNextPeriod()
+    {
+        m_stats.clear();
     }
     
     /**
@@ -262,12 +344,15 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
      */
     private void printf( String pattern, Object... args )
     {
-        StringBuilder sb = new StringBuilder();
-        Formatter formatter = new Formatter(sb);
+        if( m_log != null )
+        {
+            StringBuilder sb = new StringBuilder();
+            Formatter formatter = new Formatter(sb);
 
-        formatter.format(pattern, args);
+            formatter.format(pattern, args);
         
-        m_log.info(sb.toString());
+            m_log.info(sb.toString());
+        }
     }
     
     /**
@@ -276,14 +361,43 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
      */
     private class CollectorThread extends Thread
     {
-        long lastRun = System.currentTimeMillis();
+        long m_lastRun = System.currentTimeMillis();
+        long m_nextWakeup;
+        
+        void nextPeriod()
+        {
+            long now = System.currentTimeMillis();
+            
+            long periodMillis = m_periodSeconds * 1000L;
+            m_nextWakeup = (now / periodMillis) * periodMillis + periodMillis;
+        }
         
         @Override
         public void run()
-        {            
+        {
+            nextPeriod();
+            
+            while(!m_stopCollector)
+            {
+                try
+                {
+                    if( emptyQueue(m_nextWakeup) )
+                    {
+                        doLog(m_lastRun, m_nextWakeup);
+                        m_lastRun = m_nextWakeup;
+                        nextPeriod();
+                    }
+                }
+                catch( Throwable t )
+                {
+                    // Make sure that we keep running no matter what.
+                    // TODO: Log this?
+                }
+            }
+            
             long now = System.currentTimeMillis();
-            doLog(lastRun, now);
-            lastRun = now;            
+            emptyQueue( now );
+            doLog( m_lastRun, now );
         }
         
     }
@@ -298,8 +412,18 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     public void setPeriod(int periodSeconds)
     {
         m_periodSeconds = periodSeconds;
+        m_collectorThread.nextPeriod();
     }
 
+
+    @Override
+    public void setName(String name)
+    {
+        super.setName(name);
+        
+        rebuildJmx();
+    }
+    
     //
     //  START MBEAN STUFF HERE
     //
@@ -308,6 +432,8 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     {
         if( attribute.equals( JMX_QUEUE_LENGTH ) )
             return m_queue.size();
+        else if( attribute.equals( JMX_DROPPED_STOPWATCHES) )
+            return m_rejectedStopWatches.longValue();
         
         Map<String, JmxStatistics> stats = m_jmxStatistics;
     
@@ -396,10 +522,12 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     {
         MBeanAttributeInfo[] attributes = null;
 
+        int numAttrs = m_jmxAttributes != null ? m_jmxAttributes.length : 0;
+        
+        attributes = new MBeanAttributeInfo[numAttrs*ATTRS_PER_ITEM+2];
+        
         if( m_jmxAttributes != null )
         {
-            attributes = new MBeanAttributeInfo[m_jmxAttributes.length*ATTRS_PER_ITEM+1];
-
             for( int i = 0; i < m_jmxAttributes.length; i++ )
             {
                 String name = m_jmxAttributes[i].trim();
@@ -412,11 +540,20 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
                 attributes[ATTRS_PER_ITEM*i+5] = new MBeanAttributeInfo( name+ATTR_POSTFIX_95   ,  "double", "95th percentile", true, false, false );
             }
             
-            attributes[attributes.length-1] = new MBeanAttributeInfo( JMX_QUEUE_LENGTH, "int", 
-                                                                      "Current StopWatch processing queue length (i.e. how many StopWatches are currently unprocessed)", 
-                                                                      true, false, false );
         }
+
         //
+        //  Add internal management attributes.
+        //
+        attributes[attributes.length-1] = new MBeanAttributeInfo( JMX_QUEUE_LENGTH, "int", 
+                                                                  "Current StopWatch processing queue length (i.e. how many StopWatches are currently unprocessed)", 
+                                                                  true, false, false );
+        
+        attributes[attributes.length-2] = new MBeanAttributeInfo( JMX_DROPPED_STOPWATCHES, "long", 
+                                                                  "How many StopWatches have been dropped due to processing restrictions", 
+                                                                  true, false, false );
+
+        //      
         //  Create the actual BeanInfo instance.
         //
         MBeanOperationInfo[] operations = null;
@@ -440,5 +577,6 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
         public int    count;
         public double perc95;
     }
+
 
 }

@@ -1,5 +1,9 @@
 package com.ecyrd.speed4j;
 
+import java.lang.management.ManagementFactory;
+
+import javax.management.*;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,8 +34,13 @@ public class MultiThreadTest
     
     // This test fails if there's a ConcurrentModificationException or similar being thrown.
     @Test
-    public void testMultiThread()
+    public void testMultiThread() throws MalformedObjectNameException, NullPointerException, IntrospectionException, InstanceNotFoundException, ReflectionException
     {
+        MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
+        ObjectName on = new ObjectName("Speed4J: name="+pl.getName());
+        MBeanInfo info = mbeanServer.getMBeanInfo( on );
+        MBeanAttributeInfo[] attrs = info.getAttributes();
+
         int numThreads = 100;
         Thread[] threads = new Thread[numThreads];
         

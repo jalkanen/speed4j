@@ -171,6 +171,27 @@ all the speed4j configuration module does is that it just simply calls the appro
 setter module - so if a property is called "speed4j.myLog.period=50" it will call
 setPeriod(50) on myLog.
  
+TRICKS AND TIPS
+===============
+
+Q: I want to see just the JMX data, not the logging.
+
+A: Set the slf4jLogname to an empty string. For example 
+   speed4j.loggingFactory.slf4jLogname=
+
+
+Q: It seems that there are a lot of StopWatches in memory! Memory leak! Waaaa!
+
+A: The StopWatches are collected in a separate Thread.  In a high-CPU usage scenario
+   it's possible that the Thread is starved, and it just can't keep up.  For such
+   cases the StopWatch queue has a maximum size which you can set with e.g.
+   
+   speed4j.loggingFactory.maxQueueSize = 10000 # It can now hold up to 10,000 items.
+
+   The default size is 100,000 items, which should be plenty.
+	
+   You can monitor the queue size with JMX, as well as the number of dropped
+   StopWatches (when the queue flows over).
 
 LICENSE INFORMATION
 ===================
