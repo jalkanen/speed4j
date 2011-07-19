@@ -8,6 +8,10 @@
   
 * Added new internal JMX attribute: "DroppedStopWatches" to monitor StopWatches
   which are dropped when they can't fit in the queue.
+  
+* There's another new internal JMX attribute: "StopWatchQueueLength" which you
+  can use to directly monitor whether Speed4j is keeping up with the incoming
+  events.
 
 * You can now shut up the PeriodicalLog logging by simply setting the slf4jLogName
   to an empty string.
