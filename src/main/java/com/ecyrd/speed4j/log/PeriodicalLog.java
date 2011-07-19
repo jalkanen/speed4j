@@ -65,7 +65,6 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     
     private Queue<StopWatch> m_queue              = new ConcurrentLinkedQueue<StopWatch>();
     private Thread           m_collectorThread;
-    private boolean          m_running            = true;
     private int              m_periodSeconds      = 30;
     private MBeanServer      m_mbeanServer        = null;
     private String[]         m_jmxAttributes      = null;
@@ -139,7 +138,6 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     @Override
     public void shutdown()
     {
-        m_running = false;
         scheduler.shutdown();        
 
         try
