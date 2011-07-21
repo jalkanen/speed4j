@@ -17,7 +17,7 @@
 
   <groupId>com.ecyrd.speed4j</groupId>
   <artifactId>speed4j</artifactId>
-  <version>0.10</version>
+  <version>0.11-SNAPSHOT</version>
   <packaging>jar</packaging>
   <description>Speed4j is a basic performance analysis library for Java which allows you to insert
                stopwatches into your codebase and turn them on or off as you need.</description>
