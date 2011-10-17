@@ -211,7 +211,7 @@ public class Percentile implements Serializable
 
     private double evaluateSorted( final double[] sorted, final double p )
     {
-        double n = (double) sorted.length;
+        double n = sorted.length;
         double pos = p * (n + 1) / 100;
         double fpos = Math.floor(pos);
         int intPos = (int) fpos;
