@@ -16,6 +16,9 @@
 * You can now shut up the PeriodicalLog logging by simply setting the slf4jLogName
   to an empty string.
 
+* PeriodicalLog now requires Java 6 for j.u.c.LinkedBlockingDeque.  Speed4j can
+  only be used on Java 5 VM if PeriodicalLog is not used.
+
 0.9
 ===
 

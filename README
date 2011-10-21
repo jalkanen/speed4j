@@ -147,6 +147,8 @@ something that looks like this:
 (The 95th means the 95th percentile, i.e. 95% of all calls stayed under this limit.  This is very useful
 for figuring out which methods have wildy varying performance.)
 
+PeriodicalLog requires Java 6.
+
 PROGRAMMATIC CONFIGURATION
 ==========================
 
