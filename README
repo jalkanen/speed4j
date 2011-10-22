@@ -20,12 +20,12 @@ Or, you can put this into your pom.xml:
 <dependency>
     <groupId>com.ecyrd.speed4j</groupId>
     <artifactId>speed4j</artifactId>
-    <version>0.11</version>
+    <version>0.12</version>
 </dependency>
 
 Or, if you like Apache Ivy more, use this:
 
-<dependency org="com.ecyrd.speed4j" name="speed4j" rev="0.11"/>
+<dependency org="com.ecyrd.speed4j" name="speed4j" rev="0.12"/>
 
 
 

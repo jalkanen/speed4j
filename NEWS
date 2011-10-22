@@ -1,3 +1,16 @@
+0.12
+====
+
+* Speed4j core now requires only Java 5.  Added note about PeriodicalLog requiring
+  Java6.  Thanks to Brad Fitz!
+
+* Documentation fixes, again thanks to Brad!
+
+0.11
+====
+
+* Improved Perf4j compatibility by adding StopWatch.getElapsedTime()
+
 0.10
 ====
 
