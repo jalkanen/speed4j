@@ -20,12 +20,12 @@ Or, you can put this into your pom.xml:
 <dependency>
     <groupId>com.ecyrd.speed4j</groupId>
     <artifactId>speed4j</artifactId>
-    <version>0.3</version>
+    <version>0.11</version>
 </dependency>
 
 Or, if you like Apache Ivy more, use this:
 
-<dependency org="com.ecyrd.speed4j" name="speed4j" rev="0.3"/>
+<dependency org="com.ecyrd.speed4j" name="speed4j" rev="0.11"/>
 
 
 
@@ -146,6 +146,8 @@ something that looks like this:
 
 (The 95th means the 95th percentile, i.e. 95% of all calls stayed under this limit.  This is very useful
 for figuring out which methods have wildy varying performance.)
+
+PeriodicalLog requires Java 6.
 
 PROGRAMMATIC CONFIGURATION
 ==========================
