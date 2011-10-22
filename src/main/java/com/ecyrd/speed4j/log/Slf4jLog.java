@@ -37,7 +37,8 @@ public class Slf4jLog extends Log
      */
     public void setSlf4jLogname(String logName)
     {
-        if( logName.isEmpty() ) 
+        // use length() == 0 instead of isEmpty() for Java 5 compatibility
+        if( logName.length() == 0 )
         {
             m_log = null;
         }
