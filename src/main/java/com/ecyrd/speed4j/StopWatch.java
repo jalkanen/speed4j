@@ -198,7 +198,7 @@ public class StopWatch implements Serializable
     // Uses concat() to achieve some minor speed upgrades.
     public String toString()
     {
-        return (m_tag != null ? m_tag : DEFAULT_TAG).concat(": ").concat(getReadableTime()).concat( (m_message != null ? m_message : "") );
+        return (m_tag != null ? m_tag : DEFAULT_TAG).concat(": ").concat(getReadableTime()).concat( (m_message != null ? " "+m_message : "") );
     }
 
     /**
