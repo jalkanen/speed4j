@@ -32,97 +32,99 @@ public class CollectedStatistics
     private DoubleList m_times = new DoubleList();
     private double m_min = Double.MAX_VALUE;
     private double m_max = 0.0;
-    
+
     private double NANOS_IN_MILLIS = 1e6;
-    
+    private double NANOS_IN_MICROS = 1e3;
+    private double MICROS_IN_MILLIS = 1e3;
+
     /**
      *  Add a StopWatch to the statistics.
-     *  
+     *
      *  @param sw StopWatch to add.
      */
     public synchronized void add(StopWatch sw)
     {
-        double timeInMs = sw.getTimeNanos() / NANOS_IN_MILLIS;
+        double timeInMs = sw.getTimeMicros() / MICROS_IN_MILLIS;
         m_times.add(timeInMs);
-        
+
         if( timeInMs < m_min ) m_min = timeInMs;
         if( timeInMs > m_max ) m_max = timeInMs;
     }
-    
+
     /**
      *  Returns the number of stopwatches.  This is a fast operation.
-     *  
+     *
      *  @return Number of StopWatches.
      */
     public synchronized int getInvocations()
     {
         return m_times.size();
     }
-    
+
     /**
      *  Returns the fastest StopWatch time recorded.  This is a fast
      *  operation.
-     *  
+     *
      *  @return Fastest in milliseconds.
      */
     public synchronized double getMin()
     {
         return m_min;
     }
-    
+
     /**
      *  Returns the slowest StopWatch time recorded.  This is a fast
      *  operation.
-     *  
+     *
      *  @return Slowest in milliseconds.
      */
     public synchronized double getMax()
     {
         return m_max;
     }
-    
+
     /**
      *  Returns the average of the StopWatches recorded.  NB: This call
      *  causes all of the StopWatches to be traversed, which makes it fairly slow.
-     *  
+     *
      *  @return The average in milliseconds.
      */
     public synchronized double getAverageMS()
     {
         double result = 0.0;
-    
+
         for( Double d : m_times.m_values )
         {
             result += d;
         }
-        
+
         return result / m_times.size();
     }
-    
+
     /**
      *  Returns the standard deviation of all StopWatches recorded.  NB: This
      *  call causes all of the StopWatches to be traversed, which makes it fairly slow.
-     *  
+     *
      *  @return The standard deviation.
      */
     public synchronized double getStdDev()
     {
         return Math.sqrt(variance());
     }
-    
+
     /**
      *  Returns the variance of all StopWatches recorded. NB: This
      *  call causes all of the StopWatches to be traversed, which makes it fairly slow.
-     *  
+     *
      *  @return The variance.
      */
-    public synchronized double variance() 
+    public synchronized double variance()
     {
         long n = 0;
         double mean = 0;
         double s = 0.0;
 
-        for (double x : m_times.m_values) 
+        for (double x : m_times.m_values)
         {
             n++;
             double delta = x - mean;
@@ -135,17 +137,17 @@ public class CollectedStatistics
 
     /**
      *  Get the nth percentile.  NB: This is also a fairly slow operation.
-     *  
+     *
      *  @param percentile Percentile to get.
      *  @return
      */
     public synchronized double getPercentile(int percentile)
     {
         Percentile p = new Percentile();
-        
+
         return p.evaluate( m_times.m_values, 0, m_times.size(), percentile );
     }
-    
+
     /**
      *  A very simple class to hold a number of double values in memory fairly
      *  optimally (this is better than using a Double array, since Doubles take
@@ -155,21 +157,21 @@ public class CollectedStatistics
     {
         public double[] m_values = new double[256];
         public int      m_size;
-        
+
         public void add(double d)
         {
             ensureCapacity(m_size+1);
             m_values[m_size++] = d;
         }
-        
+
         public int size()
         {
             return m_size;
         }
 
-        private void ensureCapacity(int capacity) 
+        private void ensureCapacity(int capacity)
         {
-            if( capacity > m_values.length ) 
+            if( capacity > m_values.length )
             {
               int newsize = ((m_values.length * 3) / 2) + 1;
               double[] olddata = m_values;

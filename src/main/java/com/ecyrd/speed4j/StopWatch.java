@@ -158,16 +158,36 @@ public class StopWatch implements Serializable
     }
 
     /**
+     *  Set the tag (grouping) for this StopWatch.
+     *
+     *  @param tag A valid string tag.
+     */
+    public void setTag(String tag)
+    {
+        m_tag = tag;
+    }
+
+    /**
      *  Returns the elapsed time in nanoseconds.
      *
      *  @return
      */
-    public long getTimeNanos()
+    private long getTimeNanos()
     {
         if( m_stopNanos != 0 )
             return m_stopNanos - m_startNanos;
 
         return System.nanoTime() - m_startNanos;
+    }
+
+    /**
+     *  Returns the elapsed time in microseconds.
+     *
+     *  @return The elapsed time in microseconds.
+     */
+    public long getTimeMicros()
+    {
+        return getTimeNanos() / 1000;
     }
 
     /**
@@ -178,7 +198,7 @@ public class StopWatch implements Serializable
      */
     public long getElapsedTime()
     {
-        return getTimeNanos() / 1000;
+        return getTimeNanos() / 1000000;
     }
 
     /**

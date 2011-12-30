@@ -29,7 +29,7 @@ public class FormattedStopWatch extends StopWatch
      *    time[TIME] tag[TAG] message[MESSAGE]
      *  </pre>
      *
-     *  where TIME is the elapsed time in nanoseconds, the TAG is the tag
+     *  where TIME is the elapsed time in microseconds, the TAG is the tag
      *  for the StopWatch and MESSAGE is the message. If the message is empty,
      *  an empty "message[]" will be emitted.
      */
@@ -38,7 +38,7 @@ public class FormattedStopWatch extends StopWatch
     {
         StringBuilder sb = new StringBuilder();
 
-        sb.append( "time[" ).append(getTimeNanos()).append("] tag[")
+        sb.append( "time[" ).append(getTimeMicros()).append("] tag[")
           .append( getTag() ).append( "] message[" ).append( getMessage() ).append(']');
 
         return sb.toString();
