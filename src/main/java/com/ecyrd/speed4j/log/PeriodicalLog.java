@@ -88,6 +88,8 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
 
     private static Logger    log = LoggerFactory.getLogger( PeriodicalLog.class );
 
+    private Mode             m_mode = Mode.ALL;
+
     /**
      *  Creates an instance of PeriodicalLog.
      */
@@ -126,6 +128,39 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
         m_jmxAttributes = value.split(",");
 
         rebuildJmx();
+    }
+
+    /**
+     *  You may set the mode for the PeriodicalLog.  This can be
+     *  <ul>
+     *    <li>QUIET - when you don't want any logging</li>
+     *    <li>JMX_ONLY - when you want JMX only to show up</li>
+     *    <li>LOG_ONLY - when you want just log, not JMX</li>
+     *    <li>ALL - When you want both JMX and log</li>
+     *  </ul>
+     *  <p>
+     *  By default PeriodicalLog is in ALL mode.
+     *
+     *  @param mode One of the above strings.  If the string cannot
+     *              be recognized, the value is ignored.
+     */
+    public void setMode( String mode )
+    {
+        Mode m = Mode.valueOf( mode );
+
+        if( m != null )
+            m_mode = m;
+    }
+
+    /**
+     *  You can set the mode also directly, see {@link #setMode(String)}.
+     *
+     *  @param mode Mode to set.
+     */
+    public void setMode( Mode mode )
+    {
+        if( mode != null )
+            m_mode = mode;
     }
 
     /**
@@ -283,51 +318,58 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
      */
     private void doLog(long lastRun, long finalMoment)
     {
-        if( m_log == null || !m_log.isInfoEnabled() )
-        {
-            resetForNextPeriod();
-            return;
-        }
-
-        printf("Statistics from %tc to %tc", new Date(lastRun), new Date(finalMoment));
-
-        printf("Tag                                                           Avg(ms)      Min      Max  Std Dev     95th   Count");
-
-        for( Map.Entry<String,CollectedStatistics> e : m_stats.entrySet() )
-        {
-            CollectedStatistics cs = e.getValue();
-            printf("%-60s %8.2f %8.2f %8.2f %8.2f %8.2f %7d", e.getKey(),cs.getAverageMS(), cs.getMin(), cs.getMax(), cs.getStdDev(), cs.getPercentile( 95 ), cs.getInvocations());
-        }
-
         //
-        //  Finally, store these to the JMX attribute list
+        //  Do logging, if requested.
         //
-
-        if( m_jmxAttributes != null )
+        if( m_mode == Mode.LOG_ONLY || m_mode == Mode.ALL )
         {
-            m_jmxStatistics = new ConcurrentHashMap<String, PeriodicalLog.JmxStatistics>();
-
-            for( String name : m_jmxAttributes )
+            if( m_log != null && m_log.isInfoEnabled() )
             {
-                // TODO: Unfortunately we now calculate the stddev and 95th percentile twice, which is a bit of overhead.
-                String n = name.trim();
-                CollectedStatistics cs = m_stats.get(n);
+                printf("Statistics from %tc to %tc", new Date(lastRun), new Date(finalMoment));
 
-                if ( cs == null )
-                    continue;
+                printf("Tag                                                           Avg(ms)      Min      Max  Std Dev     95th   Count");
 
-                JmxStatistics js = new JmxStatistics();
-                js.count = cs.getInvocations();
-                js.max = cs.getMax();
-                js.min = cs.getMin();
-                js.mean = cs.getAverageMS();
-                js.perc95 = cs.getPercentile( 95 );
-                js.stddev = cs.getStdDev();
-                m_jmxStatistics.put(n, js);
+                for( Map.Entry<String,CollectedStatistics> e : m_stats.entrySet() )
+                {
+                    CollectedStatistics cs = e.getValue();
+                    printf("%-60s %8.2f %8.2f %8.2f %8.2f %8.2f %7d", e.getKey(),cs.getAverageMS(), cs.getMin(), cs.getMax(), cs.getStdDev(), cs.getPercentile( 95 ), cs.getInvocations());
+                }
+
+                printf("");
             }
         }
 
-        printf("");
+        //
+        //  Store these to the JMX attribute list
+        //
+
+        if( m_mode == Mode.JMX_ONLY || m_mode == Mode.ALL )
+        {
+            if( m_jmxAttributes != null )
+            {
+                m_jmxStatistics = new ConcurrentHashMap<String, PeriodicalLog.JmxStatistics>();
+
+                for( String name : m_jmxAttributes )
+                {
+                    // TODO: Unfortunately we now calculate the stddev and 95th percentile twice, which is a bit of overhead.
+                    String n = name.trim();
+                    CollectedStatistics cs = m_stats.get(n);
+
+                    if ( cs == null )
+                        continue;
+
+                    JmxStatistics js = new JmxStatistics();
+                    js.count = cs.getInvocations();
+                    js.max = cs.getMax();
+                    js.min = cs.getMin();
+                    js.mean = cs.getAverageMS();
+                    js.perc95 = cs.getPercentile( 95 );
+                    js.stddev = cs.getStdDev();
+                    m_jmxStatistics.put(n, js);
+                }
+            }
+        }
+
         resetForNextPeriod();
     }
 
@@ -578,5 +620,14 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
         public double perc95;
     }
 
-
+    /**
+     *  Describes the possible modes in which this system can be.
+     */
+    public static enum Mode
+    {
+        QUIET,
+        JMX_ONLY,
+        LOG_ONLY,
+        ALL
+    }
 }

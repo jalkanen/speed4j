@@ -178,8 +178,19 @@ TRICKS AND TIPS
 
 Q: I want to see just the JMX data, not the logging.
 
-A: Set the slf4jLogname to an empty string. For example
-   speed4j.loggingFactory.slf4jLogname=
+A: Configure the PeriodicalLog's mode with
+
+   log.setMode( PeriodicalLog.Mode.JMX_ONLY );
+
+   or from a property file
+
+   mylog.mode = JMX_ONLY
+
+
+Q: Ok, so how about not showing JMX statistics?
+
+A: Just use mode "LOG_ONLY".  By default, Speed4j is in "ALL" mode, but you
+   can also set it to "QUIET" if you don't want any logging to occur.
 
 
 Q: It seems that there are a lot of StopWatches in memory! Memory leak! Waaaa!
