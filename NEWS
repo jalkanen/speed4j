@@ -1,3 +1,20 @@
+0.13
+====
+
+* #12: Added space between message and time.
+
+* #14: New FormattedStopWatch class to provide machine-readable StopWatches
+
+* API now prefers microseconds all around
+
+* Allows setting of the property file from the command line using
+  -Dspeed4j.properties=myfile.properties
+
+* #13: PeriodicalLog now allows explicit mode settings, JMX_ONLY, LOG_ONLY,
+  QUIET or ALL.
+
+* Improved output of PeriodicalLog to handle longer tags.
+
 0.12
 ====
 
@@ -17,11 +34,11 @@
 * Much improved memory management: The StopWatch queue size has now a maximum limit
   (to prevent a case where a producer would just keep sending stuff that we couldn't
   process fast enough).  Also, the StopWatch queues are now emptied as quickly
-  as possible. 
-  
+  as possible.
+
 * Added new internal JMX attribute: "DroppedStopWatches" to monitor StopWatches
   which are dropped when they can't fit in the queue.
-  
+
 * There's another new internal JMX attribute: "StopWatchQueueLength" which you
   can use to directly monitor whether Speed4j is keeping up with the incoming
   events.
