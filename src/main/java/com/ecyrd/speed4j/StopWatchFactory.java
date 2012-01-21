@@ -64,21 +64,12 @@ public class StopWatchFactory
      */
     public static final String SYSTEM_PROPERTY = "speed4j.properties";
 
-    private static Map<String,StopWatchFactory> c_factories = new HashMap<String,StopWatchFactory>();
+    private static Map<String,StopWatchFactory> c_factories;
 
     /**
      *  This is the Log that this factory is associated to.
      */
     private Log m_log;
-
-    /**
-     *  When the class is instantiated, try to set up the configuration from the config
-     *  file.
-     */
-    static
-    {
-        configure();
-    }
 
     private static InputStream findConfigFile( String... alternatives )
     {
@@ -99,16 +90,25 @@ public class StopWatchFactory
         return null;
     }
 
+    private static void configure()
+    {
+        String propertyFile = System.getProperty( SYSTEM_PROPERTY, PROPERTYFILENAME );
+
+        InputStream in = findConfigFile( propertyFile,
+                                         "/com/ecyrd/speed4j/default_speed4j.properties");
+
+        configure(in);
+    }
+
     /**
      *  Load configuration file, try to parse it and do something useful.
      *
      *  @throws ConfigurationException If configuration fails.
      */
     @SuppressWarnings( "unchecked" )
-    private static void configure() throws ConfigurationException
+    private static void configure(InputStream in) throws ConfigurationException
     {
-        InputStream in = findConfigFile( System.getProperty( SYSTEM_PROPERTY, PROPERTYFILENAME ),
-                                         "/com/ecyrd/speed4j/default_speed4j.properties");
+        c_factories = new HashMap<String, StopWatchFactory>();
 
         try
         {
@@ -266,6 +266,8 @@ public class StopWatchFactory
      */
     public static void shutdown()
     {
+        if( c_factories == null ) return; // Nothing to do
+
         for( Iterator<Entry<String, StopWatchFactory>> i = c_factories.entrySet().iterator(); i.hasNext() ; )
         {
             Map.Entry<String,StopWatchFactory> e = i.next();
@@ -290,6 +292,12 @@ public class StopWatchFactory
         return new StopWatchFactory(logger);
     }
 
+    private static synchronized Map<String, StopWatchFactory> getFactories()
+    {
+        if( c_factories == null ) configure();
+        return c_factories;
+    }
+
     /**
      *  Returns a StopWatchFactory that has been configured previously. May return
      *  null, if the factory has not been configured.
@@ -299,7 +307,7 @@ public class StopWatchFactory
      */
     public static StopWatchFactory getInstance(String loggerName) throws ConfigurationException
     {
-        StopWatchFactory swf = c_factories.get(loggerName);
+        StopWatchFactory swf = getFactories().get(loggerName);
 
         if( swf == null ) throw new ConfigurationException("No logger by the name "+loggerName+" found.");
 
