@@ -30,6 +30,7 @@ public final class SetterUtil
     private static Setter[] c_setters = 
     {
         new IntegerSetter(),
+        new DoubleSetter(),
         new BooleanSetter(),
         new StringSetter()
     };
@@ -100,6 +101,28 @@ public final class SetterUtil
                 m = c.getMethod( method, int.class );
             }
                 
+            m.invoke( obj, val );
+        }
+    }
+
+    private static class DoubleSetter implements Setter
+    {
+        public void set( Object obj, String method, String value ) throws Exception
+        {
+            Class<? extends Object> c = obj.getClass();
+            Object val;
+            Method m;
+
+            val = Double.parseDouble( value );
+            try
+            {
+                m = c.getMethod( method, Double.class );
+            }
+            catch( NoSuchMethodException e )
+            {
+                m = c.getMethod( method, double.class );
+            }
+
             m.invoke( obj, val );
         }
     }

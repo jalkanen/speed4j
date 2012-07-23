@@ -277,6 +277,8 @@ public class StopWatchFactory
 
             i.remove();
         }
+
+        c_factories = null;
     }
 
     /**

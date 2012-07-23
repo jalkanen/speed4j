@@ -31,6 +31,16 @@ public class SetterUtilTest
     }
 
     @Test
+    public void testDoubleSetter() throws NoSuchMethodException
+    {
+        TestCallable tc = new TestCallable();
+
+        SetterUtil.set( tc, "setDouble", "50.123" );
+
+        assertEquals( (Double)50.123, tc.doubleField );
+    }
+
+    @Test
     public void testIntSetter() throws NoSuchMethodException
     {
         TestCallable tc = new TestCallable();
@@ -49,6 +59,7 @@ public class SetterUtilTest
         public String stringField;
         public Integer integerField;
         public Boolean booleanField;
+        public Double doubleField;
         
         public void setString(String s)
         {
@@ -63,6 +74,11 @@ public class SetterUtilTest
         public void setInt(int i)
         {
             integerField = i;
+        }
+
+        public void setDouble(Double d)
+        {
+            doubleField = d;
         }
         
         public void setBoolean( Boolean b )
