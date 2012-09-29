@@ -64,6 +64,8 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
 {
     private static final String JMX_QUEUE_LENGTH = "StopWatchQueueLength";
     private static final String JMX_DROPPED_STOPWATCHES = "DroppedStopWatches";
+    private static final String JMX_PERIOD_SECONDS = "LoggingPeriod";
+    
     private static final int    CONSTANT_ATTRS_PER_ITEM = 5;
     private static final String ATTR_POSTFIX_MAX = "/max";
     private static final String ATTR_POSTFIX_MIN = "/min";
@@ -529,7 +531,9 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
             return m_queue.size();
         else if( attribute.equals( JMX_DROPPED_STOPWATCHES) )
             return m_rejectedStopWatches.longValue();
-
+        else if( attribute.equals( JMX_PERIOD_SECONDS ) )
+            return m_periodSeconds;
+        
         Map<String, JmxStatistics> stats = m_jmxStatistics;
 
         if( stats != null )
@@ -553,7 +557,7 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
                 return cs.stddev;
             if( postfix.equals(ATTR_POSTFIX_COUNT) )
                 return cs.count;
-            
+
             try
             {
                 double n = Double.parseDouble( postfix.substring(1) );
@@ -612,7 +616,8 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
                                                      MBeanException,
                                                      ReflectionException
     {
-        // This is a no-op
+        if( attribute.getName().equals(JMX_PERIOD_SECONDS) )
+            m_periodSeconds = ((Number)attribute.getValue()).intValue();
     }
 
     public AttributeList setAttributes(AttributeList attributes)
@@ -636,7 +641,7 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
 
             int numItems = CONSTANT_ATTRS_PER_ITEM + m_percentiles.length;
 
-            attributes = new MBeanAttributeInfo[numAttrs*numItems+2];
+            attributes = new MBeanAttributeInfo[numAttrs*numItems+3];
 
             if( m_jmxAttributes != null )
             {
@@ -677,6 +682,10 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
             attributes[attributes.length-2] = new MBeanAttributeInfo( JMX_DROPPED_STOPWATCHES, "long",
                                                                       "How many StopWatches have been dropped due to processing restrictions",
                                                                       true, false, false );
+
+            attributes[attributes.length-3] = new MBeanAttributeInfo( JMX_PERIOD_SECONDS, "int",
+                                                                      "Current logging period (seconds)",
+                                                                      true, true, false );
 
             //
             //  Create the actual BeanInfo instance.
