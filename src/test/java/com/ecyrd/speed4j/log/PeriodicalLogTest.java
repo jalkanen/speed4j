@@ -68,7 +68,7 @@ public class PeriodicalLogTest
         
         MBeanAttributeInfo[] attrs = info.getAttributes();
         
-        assertEquals( "Should have just two for now", 2, attrs.length );
+        assertEquals( "Should have just two for now", 3, attrs.length );
         
         //  Now, let's add some new stuff.
         
@@ -76,7 +76,7 @@ public class PeriodicalLogTest
         
         MBeanInfo info2 = mbeanServer.getMBeanInfo( on );        
         MBeanAttributeInfo[] attrs2 = info2.getAttributes();
-        assertEquals( "Should have now test added", 9, attrs2.length );
+        assertEquals( "Should have now test added", 10, attrs2.length );
         
         // Turn to log only mode and see if JMX disappears
         pl.setMode( Mode.LOG_ONLY );
