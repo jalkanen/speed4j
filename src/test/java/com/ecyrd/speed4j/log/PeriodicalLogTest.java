@@ -1,8 +1,10 @@
 package com.ecyrd.speed4j.log;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
 
 import java.lang.management.ManagementFactory;
 
@@ -13,6 +15,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.ecyrd.speed4j.StopWatchFactory;
+import com.ecyrd.speed4j.log.PeriodicalLog.Mode;
 
 
 public class PeriodicalLogTest
@@ -53,6 +56,7 @@ public class PeriodicalLogTest
     public void testJMX() throws MalformedObjectNameException, NullPointerException, IntrospectionException, InstanceNotFoundException, ReflectionException
     {
         pl.setSlf4jLogname("");
+        pl.setPercentiles( "99,99.9" );
         
         MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
         
@@ -72,7 +76,17 @@ public class PeriodicalLogTest
         
         MBeanInfo info2 = mbeanServer.getMBeanInfo( on );        
         MBeanAttributeInfo[] attrs2 = info2.getAttributes();
-        assertEquals( "Should have now test added", 8, attrs2.length );
+        assertEquals( "Should have now test added", 9, attrs2.length );
+        
+        // Turn to log only mode and see if JMX disappears
+        pl.setMode( Mode.LOG_ONLY );
+        
+        try
+        {
+            MBeanInfo info3 = mbeanServer.getMBeanInfo( on );  
+            fail("MBean did not disappear");
+        }
+        catch( InstanceNotFoundException e ) {} // Expected
     }
     
     

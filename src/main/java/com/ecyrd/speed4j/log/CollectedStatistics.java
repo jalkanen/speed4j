@@ -143,6 +143,17 @@ public class CollectedStatistics
      */
     public synchronized double getPercentile(int percentile)
     {
+        return getPercentile( (double)percentile );
+    }
+
+    /**
+     *  Get the nth percentile.  NB: This is also a fairly slow operation.
+     *
+     *  @param percentile Percentile to get.
+     *  @return
+     */
+    public double getPercentile( double percentile )
+    {
         Percentile p = new Percentile();
 
         return p.evaluate( m_times.m_values, 0, m_times.size(), percentile );

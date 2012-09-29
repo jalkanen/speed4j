@@ -22,7 +22,7 @@ public class MultiThreadTest
         pl.setName( "multithread" );
         pl.setPeriod( 5 );
         pl.setSlf4jLogname( "multithread" );
-        
+        pl.setJmx( "Count" );
         swf = new StopWatchFactory( pl );
     }
     
@@ -74,7 +74,15 @@ public class MultiThreadTest
                 {
                     d += Math.random();
                 }
-                
+//                try
+//                {
+//                    Thread.sleep(1000);
+//                }
+//                catch( InterruptedException e )
+//                {
+//                    // TODO Auto-generated catch block
+//                    e.printStackTrace();
+//                }
                 sw.stop("Count");
             }
         }

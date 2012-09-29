@@ -64,15 +64,14 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
 {
     private static final String JMX_QUEUE_LENGTH = "StopWatchQueueLength";
     private static final String JMX_DROPPED_STOPWATCHES = "DroppedStopWatches";
-    private static final int    ATTRS_PER_ITEM = 6;
+    private static final int    CONSTANT_ATTRS_PER_ITEM = 5;
     private static final String ATTR_POSTFIX_MAX = "/max";
     private static final String ATTR_POSTFIX_MIN = "/min";
     private static final String ATTR_POSTFIX_STDDEV = "/stddev";
     private static final String ATTR_POSTFIX_AVG = "/avg";
     private static final String ATTR_POSTFIX_COUNT = "/count";
-    private static final String ATTR_POSTFIX_95 = "/95";
 
-    private static final int DEFAULT_MAX_QUEUE_SIZE = 100000;
+    private static final int DEFAULT_MAX_QUEUE_SIZE = 300000;
 
     private LinkedBlockingDeque<StopWatch> m_queue = new LinkedBlockingDeque<StopWatch>(DEFAULT_MAX_QUEUE_SIZE);
     private CollectorThread  m_collectorThread;
@@ -85,7 +84,8 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     private ObjectName       m_jmxName;
     private Map<String,JmxStatistics>       m_jmxStatistics;
     private Map<String,CollectedStatistics> m_stats = new HashMap<String,CollectedStatistics>();
-
+    private double[]         m_percentiles = { 95 };
+    
     private static Logger    log = LoggerFactory.getLogger( PeriodicalLog.class );
 
     private Mode             m_mode = Mode.ALL;
@@ -131,6 +131,27 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     }
 
     /**
+     *  Sets the percentiles that should be measured.  This is a
+     *  comma-separated list of percentiles, e.g. "95, 99, 99.9".
+     *  
+     *  @param percentiles Comma-separated list of percentiles.
+     */
+    public void setPercentiles( String percentiles )
+    {
+        if( percentiles == null ) percentiles = "";
+        
+        String[] percList = percentiles.split(",");
+        double[] percs = new double[percList.length];
+        
+        for( int i = 0; i < percList.length; i++ )
+            percs[i] = Double.parseDouble( percList[i] );
+        
+        m_percentiles = percs;
+        
+        rebuildJmx();
+    }
+    
+    /**
      *  You may set the mode for the PeriodicalLog.  This can be
      *  <ul>
      *    <li>QUIET - when you don't want any logging</li>
@@ -160,7 +181,10 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     public void setMode( Mode mode )
     {
         if( mode != null )
+        {
             m_mode = mode;
+            rebuildJmx();
+        }
     }
 
     /**
@@ -212,9 +236,12 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
 
             m_jmxName = getJMXName();
 
-            m_mbeanServer.registerMBean( this, m_jmxName );
+            if( m_beanInfo != null )
+            {
+                m_mbeanServer.registerMBean( this, m_jmxName );
 
-            log.debug("Registered new JMX bean '{}'", m_jmxName);
+                log.debug("Registered new JMX bean '{}'", m_jmxName);
+            }
         }
         catch (InstanceAlreadyExistsException e)
         {
@@ -316,8 +343,11 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
      *  This should be the only method that changes the statistics object, so it does
      *  not require locking either.
      */
+    // TODO: This method is too slow since it does recalculate things too often
     private void doLog(long lastRun, long finalMoment)
     {
+        double[] percentilenames = m_percentiles;
+
         //
         //  Do logging, if requested.
         //
@@ -325,17 +355,30 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
         {
             if( m_log != null && m_log.isInfoEnabled() )
             {
+                StringBuilder percString = new StringBuilder();
+                for( int i = 0; i < percentilenames.length; i++ )
+                {
+                    percString.append( String.format( " %6sth", Double.toString(percentilenames[i]) ) );
+                }
+                
                 printf("Statistics from %tc to %tc", new Date(lastRun), new Date(finalMoment));
 
-                printf("Tag                                                           Avg(ms)      Min      Max  Std Dev     95th   Count");
+                printf("Tag                                                           Avg(ms)      Min      Max  Std Dev"+percString+"  Count");
 
                 for( Map.Entry<String,CollectedStatistics> e : m_stats.entrySet() )
                 {
                     CollectedStatistics cs = e.getValue();
-                    printf("%-60s %8.2f %8.2f %8.2f %8.2f %8.2f %7d", e.getKey(),cs.getAverageMS(), cs.getMin(), cs.getMax(), cs.getStdDev(), cs.getPercentile( 95 ), cs.getInvocations());
+                    StringBuilder sb = new StringBuilder();
+                    
+                    sb.append(String.format("%-60s %8.2f %8.2f %8.2f %8.2f", e.getKey(),cs.getAverageMS(), cs.getMin(), cs.getMax(), cs.getStdDev()));
+                    for( int i = 0; i < percentilenames.length; i++ )
+                        sb.append( String.format(" %8.2f", cs.getPercentile( percentilenames[i] )) );
+                    
+                    sb.append( String.format("%7d", cs.getInvocations()) );
+                    m_log.info( sb.toString() );
                 }
-
-                printf("");
+                
+                m_log.info( "" );
             }
         }
 
@@ -351,7 +394,6 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
 
                 for( String name : m_jmxAttributes )
                 {
-                    // TODO: Unfortunately we now calculate the stddev and 95th percentile twice, which is a bit of overhead.
                     String n = name.trim();
                     CollectedStatistics cs = m_stats.get(n);
 
@@ -363,7 +405,11 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
                     js.max = cs.getMax();
                     js.min = cs.getMin();
                     js.mean = cs.getAverageMS();
-                    js.perc95 = cs.getPercentile( 95 );
+                    js.percentiles = new double[percentilenames.length];
+                    
+                    for( int i = 0; i < percentilenames.length; i++ )
+                        js.percentiles[i] = cs.getPercentile( percentilenames[i] );
+                    
                     js.stddev = cs.getStdDev();
                     m_jmxStatistics.put(n, js);
                 }
@@ -391,9 +437,16 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
             StringBuilder sb = new StringBuilder();
             Formatter formatter = new Formatter(sb);
 
-            formatter.format(pattern, args);
+            try
+            {
+                formatter.format(pattern, args);
 
-            m_log.info(sb.toString());
+                m_log.info(sb.toString());
+            }
+            finally
+            {
+                formatter.close();
+            }
         }
     }
 
@@ -500,9 +553,22 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
                 return cs.stddev;
             if( postfix.equals(ATTR_POSTFIX_COUNT) )
                 return cs.count;
-            if( postfix.equals(ATTR_POSTFIX_95) )
-                return cs.perc95;
-
+            
+            try
+            {
+                double n = Double.parseDouble( postfix.substring(1) );
+                for( int i = 0; i < m_percentiles.length; i++ )
+                {
+                    if( Math.abs( m_percentiles[i] - n ) < 0.00001 )
+                        return cs.percentiles[i];
+                }
+            }
+            catch( NumberFormatException e )
+            {
+                System.out.println("Fail:");
+                e.printStackTrace();
+            }
+            
             throw new AttributeNotFoundException(attribute);
         }
 
@@ -562,52 +628,75 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
      */
     private void buildMBeanInfo() throws IntrospectionException
     {
-        MBeanAttributeInfo[] attributes = null;
-
-        int numAttrs = m_jmxAttributes != null ? m_jmxAttributes.length : 0;
-
-        attributes = new MBeanAttributeInfo[numAttrs*ATTRS_PER_ITEM+2];
-
-        if( m_jmxAttributes != null )
+        if( m_mode == Mode.JMX_ONLY || m_mode == Mode.ALL )
         {
-            for( int i = 0; i < m_jmxAttributes.length; i++ )
-            {
-                String name = m_jmxAttributes[i].trim();
+            MBeanAttributeInfo[] attributes = null;
 
-                attributes[ATTRS_PER_ITEM*i]   = new MBeanAttributeInfo( name+ATTR_POSTFIX_AVG,    "double", "Average value (in milliseconds)", true, false, false );
-                attributes[ATTRS_PER_ITEM*i+1] = new MBeanAttributeInfo( name+ATTR_POSTFIX_STDDEV, "double", "Standard Deviation", true, false, false );
-                attributes[ATTRS_PER_ITEM*i+2] = new MBeanAttributeInfo( name+ATTR_POSTFIX_MIN,    "double", "Minimum value", true, false, false );
-                attributes[ATTRS_PER_ITEM*i+3] = new MBeanAttributeInfo( name+ATTR_POSTFIX_MAX,    "double", "Maximum value", true, false, false );
-                attributes[ATTRS_PER_ITEM*i+4] = new MBeanAttributeInfo( name+ATTR_POSTFIX_COUNT,  "int",    "Number of invocations", true, false, false );
-                attributes[ATTRS_PER_ITEM*i+5] = new MBeanAttributeInfo( name+ATTR_POSTFIX_95   ,  "double", "95th percentile", true, false, false );
+            int numAttrs = m_jmxAttributes != null ? m_jmxAttributes.length : 0;
+
+            int numItems = CONSTANT_ATTRS_PER_ITEM + m_percentiles.length;
+
+            attributes = new MBeanAttributeInfo[numAttrs*numItems+2];
+
+            if( m_jmxAttributes != null )
+            {
+                for( int i = 0; i < m_jmxAttributes.length; i++ )
+                {
+                    String name = m_jmxAttributes[i].trim();
+
+                    attributes[numItems*i]   = new MBeanAttributeInfo( name+ATTR_POSTFIX_AVG,    "double", "Average value (in milliseconds)", true, false, false );
+                    attributes[numItems*i+1] = new MBeanAttributeInfo( name+ATTR_POSTFIX_STDDEV, "double", "Standard Deviation", true, false, false );
+                    attributes[numItems*i+2] = new MBeanAttributeInfo( name+ATTR_POSTFIX_MIN,    "double", "Minimum value", true, false, false );
+                    attributes[numItems*i+3] = new MBeanAttributeInfo( name+ATTR_POSTFIX_MAX,    "double", "Maximum value", true, false, false );
+                    attributes[numItems*i+4] = new MBeanAttributeInfo( name+ATTR_POSTFIX_COUNT,  "int",    "Number of invocations", true, false, false );
+
+                    //
+                    //  Generate the percentile titles as /<perc>
+                    //  Drops the fractions if they're zero.
+                    //  TODO: There's probably a prettier way to do this.
+                    //
+                    for( int p = 0; p < m_percentiles.length; p++ )
+                    {
+                        String perTitle = Double.toString( m_percentiles[p] );
+                        if( perTitle.endsWith(".0") ) perTitle = perTitle.substring( 0, perTitle.length()-2 );
+
+                        attributes[numItems*i+5+p] = new MBeanAttributeInfo( name+"/"+perTitle,  "double", perTitle+"th percentile", true, false, false );
+                    }
+                }
+
             }
 
+            //
+            //  Add internal management attributes if there's a need for
+            //  JMX
+            //
+            attributes[attributes.length-1] = new MBeanAttributeInfo( JMX_QUEUE_LENGTH, "int",
+                                                                      "Current StopWatch processing queue length (i.e. how many StopWatches are currently unprocessed)",
+                                                                      true, false, false );
+
+            attributes[attributes.length-2] = new MBeanAttributeInfo( JMX_DROPPED_STOPWATCHES, "long",
+                                                                      "How many StopWatches have been dropped due to processing restrictions",
+                                                                      true, false, false );
+
+            //
+            //  Create the actual BeanInfo instance.
+            //
+            MBeanOperationInfo[] operations = null;
+            MBeanConstructorInfo[] constructors = null;
+            MBeanNotificationInfo[] notifications = null;
+
+            m_beanInfo = new MBeanInfo( getClass().getName(),
+                                        "PeriodicalLog for logger "+getName(),
+                                        attributes,
+                                        constructors,
+                                        operations,
+                                        notifications );
+        }
+        else
+        {
+            m_beanInfo = null;
         }
 
-        //
-        //  Add internal management attributes.
-        //
-        attributes[attributes.length-1] = new MBeanAttributeInfo( JMX_QUEUE_LENGTH, "int",
-                                                                  "Current StopWatch processing queue length (i.e. how many StopWatches are currently unprocessed)",
-                                                                  true, false, false );
-
-        attributes[attributes.length-2] = new MBeanAttributeInfo( JMX_DROPPED_STOPWATCHES, "long",
-                                                                  "How many StopWatches have been dropped due to processing restrictions",
-                                                                  true, false, false );
-
-        //
-        //  Create the actual BeanInfo instance.
-        //
-        MBeanOperationInfo[] operations = null;
-        MBeanConstructorInfo[] constructors = null;
-        MBeanNotificationInfo[] notifications = null;
-
-        m_beanInfo = new MBeanInfo( getClass().getName(),
-                                    "PeriodicalLog for logger "+getName(),
-                                    attributes,
-                                    constructors,
-                                    operations,
-                                    notifications );
     }
 
     private static class JmxStatistics
@@ -617,7 +706,7 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
         public double min;
         public double max;
         public int    count;
-        public double perc95;
+        public double[] percentiles;
     }
 
     /**
