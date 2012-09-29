@@ -234,6 +234,18 @@ A: If the library in question ships with its own speed4j.properties, then
 
    The property file will be searched from your classpath, including /WEB-INF/
 
+   Another way to do this is to use StopWatchFactory.getInstance( filename, factoryName ).
+   You can specify a filename which is searched for in your classpath. Any
+   factories found in that file will be added to the global list of factories,
+   so be careful.
+
+Q: I need more/less space for tag names in PeriodicalLog's output!
+
+A: Set the desired width e.g to 80 characters with
+
+   speed4j.<factoryName>.tagFieldWidth = 80
+
+
 LICENSE INFORMATION
 ===================
 

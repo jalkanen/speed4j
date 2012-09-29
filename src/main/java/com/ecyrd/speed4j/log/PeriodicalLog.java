@@ -92,6 +92,8 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
 
     private Mode             m_mode = Mode.ALL;
 
+    private int              m_tagWidth = 60;
+    
     /**
      *  Creates an instance of PeriodicalLog.
      */
@@ -132,6 +134,16 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
         rebuildJmx();
     }
 
+    /**
+     *  Sets the width of the "Tag" field in the output.
+     *  
+     *  @param value
+     */
+    public void setTagFieldWidth( int value )
+    {
+        m_tagWidth = value;
+    }
+    
     /**
      *  Sets the percentiles that should be measured.  This is a
      *  comma-separated list of percentiles, e.g. "95, 99, 99.9".
@@ -360,23 +372,23 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
                 StringBuilder percString = new StringBuilder();
                 for( int i = 0; i < percentilenames.length; i++ )
                 {
-                    percString.append( String.format( " %6sth", Double.toString(percentilenames[i]) ) );
+                    percString.append( String.format( " %6sth", saneDoubleToString(percentilenames[i]) ) );
                 }
                 
                 printf("Statistics from %tc to %tc", new Date(lastRun), new Date(finalMoment));
 
-                printf("Tag                                                           Avg(ms)      Min      Max  Std Dev"+percString+"  Count");
+                printf("%-"+m_tagWidth+"s %8s %8s %8s %8s%s%8s","Tag","Avg(ms)","Min","Max","Std Dev",percString,"Count");
 
                 for( Map.Entry<String,CollectedStatistics> e : m_stats.entrySet() )
                 {
                     CollectedStatistics cs = e.getValue();
                     StringBuilder sb = new StringBuilder();
                     
-                    sb.append(String.format("%-60s %8.2f %8.2f %8.2f %8.2f", e.getKey(),cs.getAverageMS(), cs.getMin(), cs.getMax(), cs.getStdDev()));
+                    sb.append(String.format("%-"+m_tagWidth+"s %8.2f %8.2f %8.2f %8.2f", e.getKey(),cs.getAverageMS(), cs.getMin(), cs.getMax(), cs.getStdDev()));
                     for( int i = 0; i < percentilenames.length; i++ )
                         sb.append( String.format(" %8.2f", cs.getPercentile( percentilenames[i] )) );
                     
-                    sb.append( String.format("%7d", cs.getInvocations()) );
+                    sb.append( String.format("%8d", cs.getInvocations()) );
                     m_log.info( sb.toString() );
                 }
                 
@@ -662,8 +674,7 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
                     //
                     for( int p = 0; p < m_percentiles.length; p++ )
                     {
-                        String perTitle = Double.toString( m_percentiles[p] );
-                        if( perTitle.endsWith(".0") ) perTitle = perTitle.substring( 0, perTitle.length()-2 );
+                        String perTitle = saneDoubleToString( m_percentiles[p] );
 
                         attributes[numItems*i+5+p] = new MBeanAttributeInfo( name+"/"+perTitle,  "double", perTitle+"th percentile", true, false, false );
                     }
@@ -706,6 +717,13 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
             m_beanInfo = null;
         }
 
+    }
+
+    private String saneDoubleToString( double pp )
+    {
+        String perTitle = Double.toString( pp );
+        if( perTitle.endsWith(".0") ) perTitle = perTitle.substring( 0, perTitle.length()-2 );
+        return perTitle;
     }
 
     private static class JmxStatistics

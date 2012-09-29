@@ -90,6 +90,10 @@ public class StopWatchFactory
         return null;
     }
 
+    /**
+     *  Does the default configuration by trying to locate the default
+     *  config file as defined in the System properties.
+     */
     private static void configure()
     {
         String propertyFile = System.getProperty( SYSTEM_PROPERTY, PROPERTYFILENAME );
@@ -108,7 +112,8 @@ public class StopWatchFactory
     @SuppressWarnings( "unchecked" )
     private static void configure(InputStream in) throws ConfigurationException
     {
-        c_factories = new HashMap<String, StopWatchFactory>();
+        if( c_factories == null )
+            c_factories = new HashMap<String, StopWatchFactory>();
 
         try
         {
@@ -312,6 +317,25 @@ public class StopWatchFactory
         StopWatchFactory swf = getFactories().get(loggerName);
 
         if( swf == null ) throw new ConfigurationException("No logger by the name "+loggerName+" found.");
+
+        return swf;
+    }
+
+    public static StopWatchFactory getInstance(String configFileName, String loggerName) throws ConfigurationException
+    {
+        StopWatchFactory swf = getFactories().get(loggerName);
+
+        if( swf == null ) 
+        {
+            configure( findConfigFile( configFileName ) );
+            
+            swf = getFactories().get(loggerName);
+            
+            if( swf == null )
+            {
+                throw new ConfigurationException("No logger by the name "+loggerName+" found.");
+            }
+        }
 
         return swf;
     }

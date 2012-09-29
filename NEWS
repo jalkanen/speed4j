@@ -1,6 +1,12 @@
 0.14-SNAPSHOT
 ====
 
+* Added tagFieldWidth attribute to PeriodicalLog so that you can
+  treat your OCD by making sure all your logs line up.
+
+* Added the ability to set another config file name programmatically
+  with StopWatchFactory.getInstance( filename, factoryname );
+
 * #18: PeriodicalLog logging is now both readable and settable through
   JMX.
   
