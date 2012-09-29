@@ -1,6 +1,9 @@
 0.14-SNAPSHOT
 ====
 
+* #18: PeriodicalLog logging is now both readable and settable through
+  JMX.
+  
 * #19: Support for Statsd
 
 * PeriodicalLog can now also calculate any percentile you want.  By
