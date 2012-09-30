@@ -313,8 +313,7 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
         }
         catch (Exception e)
         {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            log.error("Failed to unregister MBean", e);
         }
     }
 
@@ -525,7 +524,7 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
                 catch( Throwable t )
                 {
                     // Make sure that we keep running no matter what.
-                    // TODO: Log this?
+                    log.debug("Problem while doing logging; continuing nevertheless...",t);
                 }
             }
 
@@ -628,8 +627,7 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
             }
             catch (Exception e)
             {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.warn("Problem getting an attribute for listing: {}", s, e);
             }
         }
 

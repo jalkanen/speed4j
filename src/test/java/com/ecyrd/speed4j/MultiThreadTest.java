@@ -77,7 +77,6 @@ public class MultiThreadTest
 //                }
 //                catch( InterruptedException e )
 //                {
-//                    // TODO Auto-generated catch block
 //                    e.printStackTrace();
 //                }
                 sw.stop("Count");
