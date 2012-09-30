@@ -164,6 +164,46 @@ The percentiles will be visible in JMX under <tag>/95, <tag>/99 and <tag>/99.9
 respectively.
 
 
+SLOW LOG
+========
+
+So now you know that you have 99.9% of all requests resolving in less than 100ms.
+But what about those go over?  It would be useful to get some sort of logging
+about them, so Speed4j supports automatic logging of those events.
+
+You can configure slow logging using PeriodicalLog:
+
+speed4j.loggingFactory.slowLogname = myloggername
+speed4j.loggingFactory.slowLogPercentile = 99.9
+
+This will result in all StopWatches which belong to the 0.1% that do not complete
+in time to be logged to "myloggername" SLF4J log.
+
+There are some caveats though:
+1) Turning slow logging on may cause some slowdown of your app, especially if
+   there's a ton of requests flying over the limit - which may happen if the
+   variance of your stopwatches is very large.
+2) Percentiles are only calculated when the period time elapses - so if you
+   are logging every 60 seconds, that percentile data will be valid for the
+   *next* 60 seconds.  So the percentiles will be lagging one period behind.
+3) Slow logging will consume some extra memory which is currently not freed.
+   So using a lot of tags in your app may cause a bit of a memory leak. However,
+   we're talking kilobytes here.
+
+The slow log thresholds can be changed using JMX as well at runtime (but the
+logger name cannot).
+
+The log format is
+
+  2012-09-30T21:53:30.703+0200 99.9 "Count" "From thread Thread-54" 518.216
+
+* The creation time of the StopWatch as ISO-8601 -formatted date
+* The used percentile threshold
+* Tag
+* Message
+* Elapsed time in milliseconds
+
+
 PROGRAMMATIC CONFIGURATION
 ==========================
 

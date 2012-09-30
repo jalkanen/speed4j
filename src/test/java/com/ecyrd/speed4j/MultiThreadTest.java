@@ -24,6 +24,9 @@ public class MultiThreadTest
         pl.setPeriod( 5 );
         pl.setSlf4jLogname( "multithread" );
         pl.setJmx( "Count" );
+        pl.setSlowLogname( "slowmultithread" );
+        pl.setSlowLogPercentile( 99 );
+        
         swf = new StopWatchFactory( pl );
     }
     
@@ -48,7 +51,7 @@ public class MultiThreadTest
         
         try
         {
-            Thread.sleep(30*1000L);
+            Thread.sleep(60*1000L);
         }
         catch( InterruptedException e ) {}
         
@@ -64,7 +67,7 @@ public class MultiThreadTest
             while(true)
             {
                 StopWatch sw = swf.getStopWatch();
-                
+                sw.setMessage("From thread "+Thread.currentThread().getName());
                 @SuppressWarnings("unused")
                 double d = 0.0;
                 for( int i = 0; i < 1000; i++ )

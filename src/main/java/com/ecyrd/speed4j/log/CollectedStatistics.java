@@ -32,7 +32,6 @@ public class CollectedStatistics
     private DoubleList m_times = new DoubleList();
     private double m_min = Double.MAX_VALUE;
     private double m_max = 0.0;
-
     private double MICROS_IN_MILLIS = 1e3;
 
     /**

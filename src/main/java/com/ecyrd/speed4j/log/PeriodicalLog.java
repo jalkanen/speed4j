@@ -21,6 +21,7 @@ import java.util.Formatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -65,7 +66,9 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     private static final String JMX_QUEUE_LENGTH = "StopWatchQueueLength";
     private static final String JMX_DROPPED_STOPWATCHES = "DroppedStopWatches";
     private static final String JMX_PERIOD_SECONDS = "LoggingPeriod";
-    
+    private static final String JMX_SLOW_LOG_PERCENTILE = "SlowLogPercentile";
+    private static final String JMX_SLOW_LOG_TOGGLE = "SlowLogOn";
+
     private static final int    CONSTANT_ATTRS_PER_ITEM = 5;
     private static final String ATTR_POSTFIX_MAX = "/max";
     private static final String ATTR_POSTFIX_MIN = "/min";
@@ -74,7 +77,7 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     private static final String ATTR_POSTFIX_COUNT = "/count";
 
     private static final int DEFAULT_MAX_QUEUE_SIZE = 300000;
-
+    
     private LinkedBlockingDeque<StopWatch> m_queue = new LinkedBlockingDeque<StopWatch>(DEFAULT_MAX_QUEUE_SIZE);
     
     /** 
@@ -92,6 +95,7 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     private ObjectName       m_jmxName;
     private Map<String,JmxStatistics>       m_jmxStatistics;
     private Map<String,CollectedStatistics> m_stats = new HashMap<String,CollectedStatistics>();
+    private ConcurrentMap<String,Long> m_slowThresholdMicros = new ConcurrentHashMap<String,Long>();
     private double[]         m_percentiles = { 95 };
     
     private static Logger    log = LoggerFactory.getLogger( PeriodicalLog.class );
@@ -99,6 +103,11 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     private Mode             m_mode = Mode.ALL;
 
     private int              m_tagWidth = 60;
+    
+    private String           m_slowLogName;
+    private volatile double  m_slowLogPercentile = 99;
+    private volatile boolean m_slowLogOn = true;
+    private Logger           m_slowLog;
     
     /**
      *  Creates an instance of PeriodicalLog.
@@ -167,6 +176,18 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     public void setTagFieldWidth( int value )
     {
         m_tagWidth = value;
+    }
+    
+    public void setSlowLogname( String name )
+    {
+        m_slowLogName = name;
+        
+        m_slowLog = (name != null) ? LoggerFactory.getLogger(m_slowLogName) : null;
+    }
+    
+    public void setSlowLogPercentile( double threshold )
+    {
+        m_slowLogPercentile = threshold;
     }
     
     /**
@@ -362,6 +383,26 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
                 }
 
                 cs.add( sw );
+                
+                //
+                //  Do the logging to the slowlog as well, if it's defined
+                //  and we bypass the threshold.
+                //
+                //  TODO: Using String.format to get the ISO date isn't very fast. Need to figure out a better method.
+                //
+                if( m_slowLogOn && m_slowLog != null )
+                {
+                    Long threshold = m_slowThresholdMicros.get( sw.getTag() );
+                    if( threshold != null && sw.getTimeMicros() > threshold )
+                    {
+                        m_slowLog.info( "{} {} \"{}\" \"{}\" {}", new Object[] { 
+                                        String.format("%tFT%<tT.%<tL%<tz",new Date(sw.getCreationTime())),
+                                        saneDoubleToString( m_slowLogPercentile ),
+                                        sw.getTag(), 
+                                        sw.getMessage() != null ? sw.getMessage() : "", 
+                                        sw.getTimeMicros()/1000F } );
+                    }
+                }
             }
         }
         catch( InterruptedException e ) {} // Just return immediately
@@ -414,6 +455,9 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
                     
                     sb.append( String.format("%8d", cs.getInvocations()) );
                     m_log.info( sb.toString() );
+                    
+                    long threshold = (long)(cs.getPercentile(m_slowLogPercentile)*1000);
+                    m_slowThresholdMicros.put( e.getKey(), threshold );
                 }
                 
                 m_log.info( "" );
@@ -569,6 +613,10 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
             return m_rejectedStopWatches.longValue();
         else if( attribute.equals( JMX_PERIOD_SECONDS ) )
             return m_periodSeconds;
+        else if( attribute.equals( JMX_SLOW_LOG_PERCENTILE ) )
+            return m_slowLogPercentile;
+        else if( attribute.equals( JMX_SLOW_LOG_TOGGLE ) )
+            return m_slowLogOn;
         
         Map<String, JmxStatistics> stats = m_jmxStatistics;
 
@@ -653,6 +701,10 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     {
         if( attribute.getName().equals(JMX_PERIOD_SECONDS) )
             m_periodSeconds = ((Number)attribute.getValue()).intValue();
+        else if( attribute.getName().equals(JMX_SLOW_LOG_PERCENTILE) )
+            m_slowLogPercentile = ((Number)attribute.getValue()).doubleValue();
+        else if( attribute.getName().equals(JMX_SLOW_LOG_TOGGLE) )
+            m_slowLogOn = (Boolean)attribute.getValue();
     }
 
     public AttributeList setAttributes(AttributeList attributes)
@@ -676,7 +728,7 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
 
             int numItems = CONSTANT_ATTRS_PER_ITEM + m_percentiles.length;
 
-            attributes = new MBeanAttributeInfo[numAttrs*numItems+3];
+            attributes = new MBeanAttributeInfo[numAttrs*numItems+5];
 
             if( m_jmxAttributes != null )
             {
@@ -719,6 +771,14 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
 
             attributes[attributes.length-3] = new MBeanAttributeInfo( JMX_PERIOD_SECONDS, "int",
                                                                       "Current logging period (seconds)",
+                                                                      true, true, false );
+
+            attributes[attributes.length-4] = new MBeanAttributeInfo( JMX_SLOW_LOG_PERCENTILE, "double",
+                                                                      "Which percentile gets logged to slowlog",
+                                                                      true, true, false );
+
+            attributes[attributes.length-5] = new MBeanAttributeInfo( JMX_SLOW_LOG_TOGGLE, "boolean",
+                                                                      "Is slow logging on?",
                                                                       true, true, false );
 
             //

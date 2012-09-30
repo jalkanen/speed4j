@@ -1,5 +1,8 @@
-0.14-SNAPSHOT
+0.2-SNAPSHOT
 ====
+
+* Added slow log (finally some use for those Messages).  
+  See README for more info.
 
 * Added tagFieldWidth attribute to PeriodicalLog so that you can
   treat your OCD by making sure all your logs line up.

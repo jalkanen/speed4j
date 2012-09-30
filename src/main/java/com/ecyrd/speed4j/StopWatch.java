@@ -147,6 +147,11 @@ public class StopWatch implements Serializable
         return m_message;
     }
 
+    public void setMessage(String msg)
+    {
+        m_message = msg;
+    }
+    
     /**
      *  Returns the tag (grouping) for this StopWatch.
      *
