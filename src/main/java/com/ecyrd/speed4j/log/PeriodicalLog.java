@@ -76,7 +76,13 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     private static final int DEFAULT_MAX_QUEUE_SIZE = 300000;
 
     private LinkedBlockingDeque<StopWatch> m_queue = new LinkedBlockingDeque<StopWatch>(DEFAULT_MAX_QUEUE_SIZE);
-    private CollectorThread  m_collectorThread;
+    
+    /** 
+     *  The thread which runs the collector. Needs to be volatile because we do lazy init which
+     *  has the possibility of being run from multiple threads. 
+     */
+    
+    private volatile CollectorThread  m_collectorThread;
     private int              m_periodSeconds      = 30;
     private boolean          m_stopCollector      = false;
     private MBeanServer      m_mbeanServer        = null;
@@ -99,11 +105,6 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
      */
     public PeriodicalLog()
     {
-        m_collectorThread = new CollectorThread();
-        m_collectorThread.setName( "Speed4J PeriodicalLog Collector Thread" );
-        m_collectorThread.setDaemon( true );
-        m_collectorThread.start();
-
         rebuildJmx();
 
         Runtime.getRuntime().addShutdownHook( new Thread() {
@@ -115,10 +116,34 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
         });
     }
 
+    /**
+     *  This method also starts the collector thread lazily.
+     */
     @Override
     public void log(StopWatch sw)
     {
         if( !m_queue.offer( sw.freeze() ) ) m_rejectedStopWatches.getAndIncrement();
+
+        if( m_collectorThread == null )
+        {
+            synchronized(this)
+            {
+                //
+                //  Ensure that there is no race condition starting the thread.
+                //  Note that under the JVM5 memory model this also requires
+                //  that the field is declared as "volatile", or else the compiler
+                //  may do something nasty.
+                //
+                if( m_collectorThread == null )
+                {
+                    m_collectorThread = new CollectorThread();
+                    m_collectorThread.setName( "Speed4J PeriodicalLog Collector Thread" );
+                    m_collectorThread.setDaemon( true );
+                    m_collectorThread.start();
+                }
+            }
+
+        }
     }
 
     /**
@@ -521,7 +546,7 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     public void setPeriod(int periodSeconds)
     {
         m_periodSeconds = periodSeconds;
-        m_collectorThread.nextPeriod();
+        if( m_collectorThread != null ) m_collectorThread.nextPeriod();
     }
 
 

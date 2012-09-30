@@ -43,7 +43,7 @@ public class StopWatchTest
 
         assertEquals("ok", sw.getTag());
 
-        assertTrue( sw.getTimeMicros() > iterations*10*1000 ); // No way this could be faster
+        assertTrue( sw.getTimeMicros() > iterations*10*1000L ); // No way this could be faster
 
         String s = sw.toString(iterations);
 
@@ -73,7 +73,7 @@ public class StopWatchTest
         time = System.currentTimeMillis() - time;
 
         // Output perf data
-        System.out.println("Iterations: "+iterations+", total time "+time+" ms, is "+(iterations*1000/time)+" iterations per second");
+        System.out.println("Iterations: "+iterations+", total time "+time+" ms, is "+(iterations*1000L/time)+" iterations per second");
 
         assertTrue( "StopWatch and system count differ by more than 1 ms", Math.abs(time - total.getTimeMicros()/1e3) < 1 );
     }

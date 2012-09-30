@@ -132,12 +132,9 @@ public final class SetterUtil
 
         public void set( Object obj, String method, String value ) throws Exception
         {
-            Boolean b;
+            Boolean b = Boolean.parseBoolean(value);
             Class<? extends Object> c = obj.getClass();
-            b = value.equalsIgnoreCase( "true" ) ? true : (value.equalsIgnoreCase( "false" ) ? false : null);
-
-            if( b == null ) throw new IllegalArgumentException();
-            
+                        
             Method m;
             
             try

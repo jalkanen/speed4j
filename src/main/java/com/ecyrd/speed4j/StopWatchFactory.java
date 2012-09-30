@@ -110,7 +110,7 @@ public class StopWatchFactory
      *  @throws ConfigurationException If configuration fails.
      */
     @SuppressWarnings( "unchecked" )
-    private static void configure(InputStream in) throws ConfigurationException
+    private static synchronized void configure(InputStream in) throws ConfigurationException
     {
         if( c_factories == null )
             c_factories = new HashMap<String, StopWatchFactory>();
@@ -269,7 +269,7 @@ public class StopWatchFactory
      *  Shut down all StopWatchFactories.  This method is useful
      *  to call to clean up any resources which might be usable.
      */
-    public static void shutdown()
+    public static synchronized void shutdown()
     {
         if( c_factories == null ) return; // Nothing to do
 
