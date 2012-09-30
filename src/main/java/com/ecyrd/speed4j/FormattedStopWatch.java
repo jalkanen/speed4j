@@ -22,6 +22,8 @@ package com.ecyrd.speed4j;
  */
 public class FormattedStopWatch extends StopWatch
 {
+    private static final long serialVersionUID = 1L;
+
     /**
      *  Returns the tag & message in a fixed format.  The format
      *  is simply

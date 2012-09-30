@@ -33,8 +33,6 @@ public class CollectedStatistics
     private double m_min = Double.MAX_VALUE;
     private double m_max = 0.0;
 
-    private double NANOS_IN_MILLIS = 1e6;
-    private double NANOS_IN_MICROS = 1e3;
     private double MICROS_IN_MILLIS = 1e3;
 
     /**

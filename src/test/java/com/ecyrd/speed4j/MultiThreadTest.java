@@ -1,8 +1,9 @@
 package com.ecyrd.speed4j;
 
-import java.lang.management.ManagementFactory;
-
-import javax.management.*;
+import javax.management.InstanceNotFoundException;
+import javax.management.IntrospectionException;
+import javax.management.MalformedObjectNameException;
+import javax.management.ReflectionException;
 
 import org.junit.After;
 import org.junit.Before;
@@ -36,11 +37,6 @@ public class MultiThreadTest
     @Test
     public void testMultiThread() throws MalformedObjectNameException, NullPointerException, IntrospectionException, InstanceNotFoundException, ReflectionException
     {
-        MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
-        ObjectName on = new ObjectName("Speed4J: name="+pl.getName());
-        MBeanInfo info = mbeanServer.getMBeanInfo( on );
-        MBeanAttributeInfo[] attrs = info.getAttributes();
-
         int numThreads = 100;
         Thread[] threads = new Thread[numThreads];
         
@@ -69,6 +65,7 @@ public class MultiThreadTest
             {
                 StopWatch sw = swf.getStopWatch();
                 
+                @SuppressWarnings("unused")
                 double d = 0.0;
                 for( int i = 0; i < 1000; i++ )
                 {

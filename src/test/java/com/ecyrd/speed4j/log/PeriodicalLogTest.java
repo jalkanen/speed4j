@@ -1,9 +1,8 @@
 package com.ecyrd.speed4j.log;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.lang.management.ManagementFactory;
@@ -83,6 +82,7 @@ public class PeriodicalLogTest
         
         try
         {
+            @SuppressWarnings("unused")
             MBeanInfo info3 = mbeanServer.getMBeanInfo( on );  
             fail("MBean did not disappear");
         }
