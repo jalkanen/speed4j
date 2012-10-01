@@ -366,6 +366,9 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
         {
             while( null != (sw = m_queue.poll(100, TimeUnit.MILLISECONDS)) )
             {
+                //  Ignore faulty StopWatches
+                if( sw.getTag() == null ) continue;
+                
                 if( sw.getCreationTime() > finalMoment )
                 {
                     // Return this one back in the queue; as it belongs to the
