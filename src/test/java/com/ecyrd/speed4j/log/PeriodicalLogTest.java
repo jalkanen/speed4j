@@ -59,7 +59,7 @@ public class PeriodicalLogTest
         
         MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
         
-        ObjectName on = new ObjectName("Speed4J: name="+pl.getName());
+        ObjectName on = new ObjectName("Speed4J:name="+pl.getName());
         
         assertTrue( "jmx bean '"+on+"' is not registered!", mbeanServer.isRegistered(on) );
         

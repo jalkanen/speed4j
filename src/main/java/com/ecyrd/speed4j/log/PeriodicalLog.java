@@ -347,7 +347,7 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
      */
     private ObjectName getJMXName() throws MalformedObjectNameException
     {
-        return new ObjectName("Speed4J: name="+getName());
+        return new ObjectName("Speed4J:name="+getName());
     }
 
     /**
