@@ -568,7 +568,12 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
                 catch( Throwable t )
                 {
                     // Make sure that we keep running no matter what.
-                    log.debug("Problem while doing logging; continuing nevertheless...",t);
+                    log.warn("Problem while doing logging; continuing nevertheless...",t);
+                    try
+                    {
+                        Thread.sleep(1000);
+                    }
+                    catch( InterruptedException e ) {} // Avoid filling the log files with crap
                 }
             }
 
