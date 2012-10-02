@@ -1,3 +1,10 @@
+0.15
+====
+
+* Bug fix release.  Possible backwards compatibility issue: the ObjectName
+  used to register Speed4J into JMX has had one space removed (it was
+  impossible to see in jconsole for example).
+
 0.14
 ====
 
