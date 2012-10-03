@@ -18,8 +18,8 @@ package com.ecyrd.speed4j.log;
 import java.lang.management.ManagementFactory;
 import java.util.Date;
 import java.util.Formatter;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -94,7 +94,9 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
     private AtomicLong       m_rejectedStopWatches = new AtomicLong();
     private ObjectName       m_jmxName;
     private Map<String,JmxStatistics>       m_jmxStatistics;
-    private Map<String,CollectedStatistics> m_stats = new HashMap<String,CollectedStatistics>();
+    
+    /** The m_stats map is owned by the collector thread, so no locking is needed. */
+    private Map<String,CollectedStatistics> m_stats = new TreeMap<String,CollectedStatistics>();
     private ConcurrentMap<String,Long> m_slowThresholdMicros = new ConcurrentHashMap<String,Long>();
     private double[]         m_percentiles = { 95 };
     
