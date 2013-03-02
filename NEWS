@@ -1,3 +1,8 @@
+0.17
+====
+
+* Slowlog no longer uses memory if the feature is turned off.
+
 0.16
 ====
 

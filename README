@@ -189,6 +189,10 @@ There are some caveats though:
 3) Slow logging will consume some extra memory which is currently not freed.
    So using a lot of tags in your app may cause a bit of a memory leak. However,
    we're talking kilobytes here.
+   
+   If you stop measuring slow log by either turning it off from JMX or setting
+   the slowLog name to null via PeriodicalLog.setSlowLogname(), the memory
+   is freed (and consequently, relogging will start when you turn it back on).
 
 The slow log thresholds can be changed using JMX as well at runtime (but the
 logger name cannot).
