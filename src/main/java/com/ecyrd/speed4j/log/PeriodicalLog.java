@@ -185,6 +185,12 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
         m_slowLogName = name;
         
         m_slowLog = (name != null) ? LoggerFactory.getLogger(m_slowLogName) : null;
+        
+        //
+        //  As a side effect, when the slow log is turned off, we clear
+        //  the cache to return the memory to the system.
+        //
+        if( name == null ) m_slowThresholdMicros.clear();
     }
     
     public void setSlowLogPercentile( double threshold )
@@ -461,8 +467,15 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
                     sb.append( String.format("%8d", cs.getInvocations()) );
                     m_log.info( sb.toString() );
                     
-                    long threshold = (long)(cs.getPercentile(m_slowLogPercentile)*1000);
-                    m_slowThresholdMicros.put( e.getKey(), threshold );
+                    //
+                    //  Only collect threshold information when the slow logging
+                    //  is on.  Otherwise the array grows without bounds.
+                    //
+                    if( m_slowLogOn && m_slowLog != null )
+                    {
+                        long threshold = (long)(cs.getPercentile(m_slowLogPercentile)*1000);
+                        m_slowThresholdMicros.put( e.getKey(), threshold );
+                    }
                 }
                 
                 m_log.info( "" );
@@ -714,7 +727,10 @@ public class PeriodicalLog extends Slf4jLog implements DynamicMBean
         else if( attribute.getName().equals(JMX_SLOW_LOG_PERCENTILE) )
             m_slowLogPercentile = ((Number)attribute.getValue()).doubleValue();
         else if( attribute.getName().equals(JMX_SLOW_LOG_TOGGLE) )
+        {
+            m_slowThresholdMicros.clear();
             m_slowLogOn = (Boolean)attribute.getValue();
+        }
     }
 
     public AttributeList setAttributes(AttributeList attributes)
