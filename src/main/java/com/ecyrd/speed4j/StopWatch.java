@@ -36,6 +36,7 @@ public class StopWatch implements Serializable
     private long   m_creation;
     private long   m_startNanos;
     private long   m_stopNanos;
+    private int    m_count;
     private String m_tag;
     private String m_message;
 
@@ -43,7 +44,7 @@ public class StopWatch implements Serializable
 
     public StopWatch()
     {
-        this( null, null );
+        this( null, null);
     }
 
     public StopWatch( String tag )
@@ -56,6 +57,7 @@ public class StopWatch implements Serializable
         m_tag = tag;
         m_message = message;
         m_creation = System.currentTimeMillis();
+        m_count = 1;
         start();
     }
 
@@ -95,6 +97,21 @@ public class StopWatch implements Serializable
     }
 
     /**
+     * Stops the StopWatch and set the the amount of operations.
+     * This method is used when needed one operation perspective for bulk operations.
+     *
+     * @param count Bulk operation count.
+     * @return This StopWatch.
+     */
+    public StopWatch stop( int count )
+    {
+        m_count = count;
+        stop();
+
+        return this;
+    }
+
+    /**
      *  Stops the StopWatch and assigns the given tag to it.
      *
      *  @param tag The tag to assign.
@@ -104,6 +121,22 @@ public class StopWatch implements Serializable
     {
         m_tag = tag;
         stop();
+
+        return this;
+    }
+
+    /**
+     * Stops the StopWatch and assigns the given tag to it and set the the amount of operations.
+     * This method is used when needed one operation perspective for bulk operations.
+     *
+     * @param tag The tag to assign.
+     * @param count Bulk operation count.
+     * @return This StopWatch.
+     */
+    public StopWatch stop( String tag , int count)
+    {
+        m_tag = tag;
+        stop(count);
 
         return this;
     }
@@ -120,6 +153,24 @@ public class StopWatch implements Serializable
         m_tag = tag;
         m_message = message;
         stop();
+
+        return this;
+    }
+    /**
+     * Stops the StopWatch, assigns the tag ,a free-form message and the the amount of operations.
+     * This method is used when needed one operation perspective for bulk operations.
+     *
+     * @param tag The tag to assign.
+     * @param message A free-form message that associates with this particular StopWatch.
+     * @param count Bulk operation count.
+     * @return This StopWatch.
+     */
+
+    public StopWatch stop( String tag, String message, int count )
+    {
+        m_tag = tag;
+        m_message = message;
+        stop(count);
 
         return this;
     }
@@ -217,6 +268,16 @@ public class StopWatch implements Serializable
     }
 
     /**
+     * Returns the number of items that were measured in one StopWatch
+     *
+     * @return count
+     */
+    public long getCount()
+    {
+        return m_count;
+    }
+
+    /**
      *  Returns a human-readable string.  This is a slowish op, so don't call unnecessarily.
      *  Do NOT rely this in being any particular format.
      */
@@ -290,11 +351,11 @@ public class StopWatch implements Serializable
     // TODO: Should probably return a FrozenStopWatch
     public StopWatch freeze()
     {
-        StopWatch sw = new StopWatch( m_tag, m_message );
+        StopWatch sw = new StopWatch( m_tag, m_message);
         sw.m_startNanos = m_startNanos;
         sw.m_stopNanos = m_stopNanos != 0 ? m_stopNanos : System.nanoTime();
         sw.m_creation = m_creation;
-
+        sw.m_count = m_count;
         return sw;
     }
 }

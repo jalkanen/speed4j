@@ -42,8 +42,9 @@ public class CollectedStatistics
     public synchronized void add(StopWatch sw)
     {
         double timeInMs = sw.getTimeMicros() / MICROS_IN_MILLIS;
-        m_times.add(timeInMs);
-
+        // let fake the array
+        for ( int i=0; i < sw.getCount() ; i++ )
+            m_times.add(timeInMs / sw.getCount());
         if( timeInMs < m_min ) m_min = timeInMs;
         if( timeInMs > m_max ) m_max = timeInMs;
     }
